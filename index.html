@@ -82,17 +82,15 @@
             box-shadow: 0 30px 80px rgba(0,0,0,0.6); 
             border: 1px solid var(--glass-border);
             display: flex; flex-direction: column; justify-content: center;
-            /* 鼠标不活动时隐藏光标 */
             cursor: default; 
         }
-        /* 动态类：隐藏光标 */
         #video-container.hide-cursor { cursor: none; }
 
         video { width: 100%; height: 100%; display: block; }
         video.fade-in { animation: fadeIn 0.8s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 系统 Log */
+        /* 系统 Log (左上角) */
         #logs { 
             position: absolute; top: 20px; left: 20px; 
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
@@ -103,25 +101,37 @@
         }
         #logs.show { opacity: 1; }
 
-        /* --- 底部悬浮控制栏 (透明度调高版) --- */
+        /* ⬇️ 新增：屏幕中央音量指示器 (OSD) */
+        #volume-indicator {
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(15px);
+            padding: 20px 30px; border-radius: 20px;
+            color: white; font-size: 24px; font-weight: 700;
+            display: flex; align-items: center; gap: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            opacity: 0; transition: opacity 0.3s;
+            pointer-events: none; z-index: 30;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        #volume-indicator.show { opacity: 1; }
+
+        /* --- 底部悬浮控制栏 --- */
         .video-controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
             height: 56px;
-            /* ⬇️ 透明度调整：从 0.8 改为 0.5，更通透 */
             background: rgba(15, 15, 20, 0.5); 
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             display: flex; align-items: center; padding: 0 16px; box-sizing: border-box;
             gap: 16px; 
-            opacity: 0; /* 默认隐藏 */
-            transform: translateY(10px);
+            opacity: 0; transform: translateY(10px);
             transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             z-index: 10;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        
-        /* 动态类：显示控制栏 */
         .video-controls.visible { opacity: 1; transform: translateY(0); }
 
         .ctrl-btn {
@@ -255,6 +265,8 @@
             <div id="video-container" onmousemove="resetIdleTimer()" onmouseleave="forceHideControls()">
                 <video id="videoElement" muted></video>
                 <div id="logs">系统就绪</div>
+                
+                <div id="volume-indicator">🔊 50%</div>
 
                 <div class="video-controls">
                     <button class="ctrl-btn" id="ctrlPlay" onclick="togglePlay()">
@@ -319,21 +331,19 @@
     var hlsPlayer = null;
     var currentQualities = {}; 
     var deleteTargetId = null; 
+    // 读取上次音量
+    var lastVolume = parseFloat(localStorage.getItem('playerVolume')) || 0.5;
     
-    // --- ⬇️ 自动隐藏控制栏逻辑 ---
+    // --- 自动隐藏控制栏逻辑 ---
     let idleTimer = null;
     const controls = document.querySelector('.video-controls');
     const container = document.getElementById('video-container');
 
     function resetIdleTimer() {
-        // 鼠标移动时：显示控制栏，恢复光标
         controls.classList.add('visible');
         container.classList.remove('hide-cursor');
-        
         clearTimeout(idleTimer);
-        // 3秒后无操作则隐藏
         idleTimer = setTimeout(() => {
-            // 只有当视频在播放时才隐藏
             const video = document.getElementById('videoElement');
             if (video && !video.paused) {
                 controls.classList.remove('visible');
@@ -343,11 +353,25 @@
     }
 
     function forceHideControls() {
-        // 鼠标移出容器，立即隐藏（如果正在播放）
         const video = document.getElementById('videoElement');
         if (video && !video.paused) {
             controls.classList.remove('visible');
         }
+    }
+
+    // --- ⬇️ 新增：显示屏幕中间的音量提示 ---
+    function showVolumeIndicator(vol) {
+        const el = document.getElementById('volume-indicator');
+        const percent = Math.round(vol * 100);
+        let icon = '🔊';
+        if (vol === 0) icon = '🔇';
+        else if (vol < 0.5) icon = '🔉';
+        
+        el.innerText = `${icon} ${percent}%`;
+        el.classList.add('show');
+        
+        clearTimeout(window.volTimeout);
+        window.volTimeout = setTimeout(() => el.classList.remove('show'), 1000);
     }
 
     // 绑定滚轮音量
@@ -358,7 +382,42 @@
         if(v<0) v=0; if(v>1) v=1;
         setVolume(v);
         document.querySelector('.volume-slider').value = v;
-        resetIdleTimer(); // 滚动时也算活跃
+        resetIdleTimer();
+    });
+
+    // --- ⬇️ 新增：键盘快捷键 (W/S/ArrowUp/ArrowDown/Space/F) ---
+    document.addEventListener('keydown', (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+        const video = document.getElementById('videoElement');
+        
+        switch(e.code) {
+            case 'Space': 
+                e.preventDefault(); togglePlay(); resetIdleTimer(); break;
+            case 'KeyF': 
+                e.preventDefault(); toggleFullScreen(); break;
+            case 'ArrowUp': 
+            case 'KeyW':
+                e.preventDefault();
+                let vUp = Math.min(1, video.volume + 0.1);
+                setVolume(vUp);
+                document.querySelector('.volume-slider').value = vUp;
+                resetIdleTimer();
+                break;
+            case 'ArrowDown': 
+            case 'KeyS':
+                e.preventDefault();
+                let vDown = Math.max(0, video.volume - 0.1);
+                setVolume(vDown);
+                document.querySelector('.volume-slider').value = vDown;
+                resetIdleTimer();
+                break;
+        }
+    });
+
+    // 点击屏幕播放/暂停 (避开控制栏)
+    document.getElementById('video-container').addEventListener('click', (e) => {
+        if (e.target.closest('.video-controls')) return;
+        togglePlay();
     });
 
     document.addEventListener("visibilitychange", function() {
@@ -421,11 +480,14 @@
         }
     }
 
+    // ⬇️ 修改：设置音量时同时触发 OSD 显示和保存
     function setVolume(val) {
         const video = document.getElementById('videoElement');
         video.volume = val;
         video.muted = (val === 0);
         updateMuteIcon(val);
+        showVolumeIndicator(val); // 显示中间提示
+        localStorage.setItem('playerVolume', val); // 保存记忆
     }
 
     function toggleMute() {
@@ -435,12 +497,13 @@
             video.muted = false;
             video.volume = 0.5; 
             slider.value = 0.5;
+            setVolume(0.5);
         } else {
             video.muted = true;
             video.volume = 0;
             slider.value = 0;
+            setVolume(0);
         }
-        updateMuteIcon(video.volume);
     }
 
     function updateMuteIcon(vol) {
@@ -499,6 +562,7 @@
     function loadVideo(realUrl) {
         const videoElement = document.getElementById('videoElement');
         const playBtn = document.getElementById('ctrlPlay');
+        const slider = document.querySelector('.volume-slider');
         
         if (flvPlayer) { flvPlayer.destroy(); flvPlayer = null; }
         if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
@@ -507,12 +571,17 @@
         void videoElement.offsetWidth;
         videoElement.classList.add('fade-in');
 
+        // ⬇️ 恢复记忆音量
+        videoElement.volume = lastVolume;
+        videoElement.muted = (lastVolume === 0);
+        slider.value = lastVolume;
+        updateMuteIcon(lastVolume);
+
         videoElement.onpause = function() {
             log("已暂停");
             if(hlsPlayer) hlsPlayer.stopLoad();
             if(flvPlayer) flvPlayer.unload();
             playBtn.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-            // 暂停时强制显示控制栏
             controls.classList.add('visible');
             container.classList.remove('hide-cursor');
         };
@@ -522,7 +591,6 @@
             if(flvPlayer) { flvPlayer.load(); flvPlayer.play(); }
             if(hlsPlayer) { hlsPlayer.startLoad(); if(hlsPlayer.liveSyncPosition) videoElement.currentTime = hlsPlayer.liveSyncPosition; }
             playBtn.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-            // 开始播放后启动倒计时
             resetIdleTimer();
         };
 
@@ -531,10 +599,14 @@
                 flvPlayer = mpegts.createPlayer({ type: 'flv', isLive: true, url: realUrl });
                 flvPlayer.attachMediaElement(videoElement);
                 flvPlayer.load();
-                videoElement.muted = true;
-                document.querySelector('.volume-slider').value = 0;
-                updateMuteIcon(0);
-                flvPlayer.play().catch(e=>{});
+                // 尝试恢复播放，如果失败(浏览器限制)则静音
+                var promise = flvPlayer.play();
+                if (promise !== undefined) {
+                    promise.catch(error => {
+                        videoElement.muted = true;
+                        flvPlayer.play();
+                    });
+                }
             }
         } else if (realUrl.includes('.m3u8')) {
             if (Hls.isSupported()) {
@@ -542,10 +614,13 @@
                 hlsPlayer.loadSource(realUrl);
                 hlsPlayer.attachMedia(videoElement);
                 hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() { 
-                    videoElement.muted = true;
-                    document.querySelector('.volume-slider').value = 0;
-                    updateMuteIcon(0);
-                    videoElement.play(); 
+                    var promise = videoElement.play();
+                    if (promise !== undefined) {
+                        promise.catch(error => {
+                            videoElement.muted = true;
+                            videoElement.play();
+                        });
+                    }
                 });
             } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
                 videoElement.src = realUrl; videoElement.play();
@@ -603,7 +678,6 @@
         const name = document.getElementById('roomName').value;
         
         if (!url) return alert("请填写直播间链接");
-        // ⬇️ 新增：必填校验
         if (!name) return alert("请填写主播备注");
 
         await db.from('favorites').insert({ name, url });
@@ -630,4 +704,3 @@
 </script>
 </body>
 </html>
-
