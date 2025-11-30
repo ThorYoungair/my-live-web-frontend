@@ -25,14 +25,14 @@
         body { 
             margin: 0; padding: 0; 
             font-family: 'Inter', sans-serif; 
-            background-color: #020617; /* 更深邃的黑 */
+            background-color: #020617; 
             color: var(--text-main); 
             height: 100vh; overflow: hidden; 
         }
 
         :root { color-scheme: dark; }
 
-        /* ⬇️ 重制版：动态多彩极光背景 */
+        /* ⬇️ 极光背景 (保持多彩快速) */
         .dynamic-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             z-index: -1; overflow: hidden; pointer-events: none;
@@ -40,43 +40,15 @@
         }
         .aurora-blob {
             position: absolute; border-radius: 50%;
-            filter: blur(60px); /* 减少模糊，让颜色更实 */
-            mix-blend-mode: hard-light; /* 强光混合，色彩更艳丽 */
-            opacity: 0.6;
+            filter: blur(60px); mix-blend-mode: hard-light; opacity: 0.6;
             animation: move linear infinite alternate;
         }
-        /* 光斑1: 霓虹紫 */
-        .blob-1 {
-            top: 10%; left: 10%; width: 50vw; height: 50vw;
-            background: #7c3aed;
-            animation-duration: 8s;
-        }
-        /* 光斑2: 亮青色 */
-        .blob-2 {
-            bottom: 10%; right: 10%; width: 60vw; height: 60vw;
-            background: #06b6d4;
-            animation-duration: 10s; animation-direction: alternate-reverse;
-        }
-        /* 光斑3: 洋红色 */
-        .blob-3 {
-            bottom: 30%; left: 20%; width: 40vw; height: 40vw;
-            background: #db2777;
-            animation-duration: 12s;
-        }
-        /* 光斑4: 深蓝色 (底衬) */
-        .blob-4 {
-            top: -10%; right: 20%; width: 70vw; height: 70vw;
-            background: #4f46e5;
-            opacity: 0.4;
-            animation-duration: 15s;
-        }
+        .blob-1 { top: 10%; left: 10%; width: 50vw; height: 50vw; background: #7c3aed; animation-duration: 8s; }
+        .blob-2 { bottom: 10%; right: 10%; width: 60vw; height: 60vw; background: #06b6d4; animation-duration: 10s; animation-direction: alternate-reverse; }
+        .blob-3 { bottom: 30%; left: 20%; width: 40vw; height: 40vw; background: #db2777; animation-duration: 12s; }
+        .blob-4 { top: -10%; right: 20%; width: 70vw; height: 70vw; background: #4f46e5; opacity: 0.4; animation-duration: 15s; }
+        @keyframes move { from { transform: translate(0, 0) scale(1); } to { transform: translate(10%, 5%) scale(1.1); } }
 
-        @keyframes move {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(10%, 5%) scale(1.1); }
-        }
-
-        /* 其它样式保持一致 */
         video::-webkit-media-controls-timeline,
         video::-webkit-media-controls-current-time-display,
         video::-webkit-media-controls-time-remaining-display,
@@ -85,7 +57,7 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-        /* ==================== 2. 弹窗样式 ==================== */
+        /* ==================== 2. 弹窗层 ==================== */
         .modal-layer { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.6); backdrop-filter: blur(20px);
@@ -186,12 +158,17 @@
             font-size: 12px; font-weight: 600; color: var(--text-sub); 
             margin-right: 4px; white-space: nowrap;
         }
+        
+        /* ⬇️ 下拉菜单样式强制深色 */
         #qualitySelect { 
             background: transparent; color: white; border: none; 
             outline: none; cursor: pointer; font-family: 'Inter', sans-serif; 
-            font-size: 13px; height: 100%; font-weight: 500; text-transform: uppercase; /* 强制大写 */
+            font-size: 13px; height: 100%; font-weight: 600; /* 加粗一点 */
         }
-        #qualitySelect option { background-color: #1e1e24; color: white; padding: 10px; }
+        /* ⬇️ 确保点开后的选项也是深色的 */
+        #qualitySelect option { 
+            background-color: #1e1e24; color: white; padding: 10px; 
+        }
 
         .icon-btn { 
             display: flex; align-items: center; gap: 6px; height: 44px;
@@ -236,6 +213,7 @@
             font-size: 13px; font-weight: 700; color: var(--text-sub); 
             text-transform: uppercase; letter-spacing: 1px;
         }
+        /* ⬇️ 右上角状态文字调整：小一点，无引号 */
         #loading-status {
             font-size: 11px; font-weight: 500; color: var(--accent);
             opacity: 0.8; letter-spacing: 0.5px;
@@ -418,23 +396,24 @@
 
     function log(msg) { document.getElementById('logs').innerText = msg; }
 
-    // --- ⬇️ 更新后的纯净版画质解析 ---
+    // --- ⬇️ 核心优化：硬核参数格式化 ---
     function formatQuality(key) {
+        // 统一转小写处理
         key = key.toLowerCase();
         
-        // 1. 特殊关键字映射
-        if (['best', 'source', 'chunked'].includes(key)) return 'Source';
-        if (['worst', 'mobile'].includes(key)) return 'Mobile';
+        // 1. 特殊关键字转专业术语
+        if (['best', 'source', 'chunked', 'origin'].includes(key)) return 'Source';
+        if (['worst', 'mobile', 'low'].includes(key)) return 'Mobile';
         if (key === 'audio_only') return 'Audio Only';
 
-        // 2. 纯分辨率格式化 (例如 1080p60 -> 1080P 60)
-        // 使用正则提取数字、p、帧率
+        // 2. 纯参数提取：例如 "1080p60" -> "1080P 60"
         if (key.includes('p')) {
-            // 将 p 替换为 P，如果有 60 等数字则加空格
+            // 把 p 变成大写 P，并在后面加空格 (如果后面有数字)
+            // 例子: 720p60 -> 720P 60, 1080p -> 1080P
             return key.replace('p', 'P ').toUpperCase().trim();
         }
 
-        // 3. 兜底：直接显示大写英文
+        // 3. 兜底：直接显示大写 (如 4K, 8K)
         return key.toUpperCase();
     }
 
@@ -458,7 +437,7 @@
             for (let q in currentQualities) {
                 let option = document.createElement('option');
                 option.value = q; 
-                // ⬇️ 使用新的格式化函数
+                // ⬇️ 使用新的硬核格式化函数
                 option.innerText = formatQuality(q);
                 select.appendChild(option);
             }
