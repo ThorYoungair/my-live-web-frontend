@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Simple Live (省流版)</title>
+    <title>My Multilive</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙂</text></svg>">
     <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -23,7 +24,10 @@
         /* 主界面 */
         #main-app { display: none; height: 100%; flex-direction: column; }
         header { background: #1f1f1f; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
-        h1 { margin: 0; font-size: 18px; color: #00d2ff; letter-spacing: 1px; }
+        
+        /* ⬇️ 标题样式修改 */
+        h1 { margin: 0; font-size: 18px; color: #00d2ff; letter-spacing: 1px; font-weight: 600; }
+        
         .user-info { font-size: 12px; color: #888; display: flex; align-items: center; gap: 10px; }
         .btn-logout { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         
@@ -39,9 +43,14 @@
         
         #video-container { flex: 1; background: black; border-radius: 8px; overflow: hidden; position: relative; min-height: 400px; }
         video { width: 100%; height: 100%; display: block; object-fit: contain; }
-        /* 播放时给视频加个渐入动画 */
         video.fade-in { animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 隐藏进度条和时间 */
+        video::-webkit-media-controls-timeline { display: none !important; }
+        video::-webkit-media-controls-current-time-display { display: none !important; }
+        video::-webkit-media-controls-time-remaining-display { display: none !important; }
+        video::-webkit-media-controls-timeline-container { display: none !important; }
 
         #logs { height: 30px; line-height: 30px; font-size: 12px; color: #888; margin-top: 5px; font-family: monospace; }
         
@@ -72,7 +81,7 @@
 
 <div id="main-app">
     <header>
-        <h1>📺 Simple Live</h1>
+        <h1>My Multilive</h1>
         <div class="user-info">
             <span id="user-email"></span>
             <button class="btn-logout" onclick="handleLogout()">退出</button>
@@ -106,35 +115,28 @@
 
 <script>
     // ==========================================
-    // ⚠️ 记得把 URL 和 Key 填回来！
-    // ==========================================
     const SUPABASE_URL = 'https://cqhvdujppknngygogawj.supabase.co'; 
     const SUPABASE_KEY = 'sb_publishable__Yv1H0eUEP5E6xwGFXGptQ_ezuZi4yF';
-    // ⚠️ 记得改为你的真实 Render 地址
     const BACKEND_URL = 'https://live-api-m63c.onrender.com';
     // ==========================================
 
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_KEY);
     
-    // 全局变量
     var flvPlayer = null;
     var hlsPlayer = null;
     var currentQualities = {}; 
 
-    // --- 新增：页面可见性监听 (切后台自动省流) ---
     document.addEventListener("visibilitychange", function() {
         const video = document.getElementById('videoElement');
         if (document.hidden) {
-            // 切到后台 -> 暂停视频
             if (!video.paused) {
                 video.pause(); 
-                log("⏸️ 切到后台，已暂停并切断流量");
+                log("⏸️ 切到后台，已暂停省流");
             }
         }
     });
 
-    // --- 0. 门禁系统 ---
     window.onload = async function() {
         const { data: { session } } = await db.auth.getSession();
         if (session) showApp(session.user.email);
@@ -145,7 +147,7 @@
         const password = document.getElementById('password').value;
         const msg = document.getElementById('login-msg');
         if(!email || !password) { msg.innerText = "请输入账号密码"; return; }
-        msg.innerText = "正在验证...";
+        msg.innerText = "验证中...";
         const { data, error } = await db.auth.signInWithPassword({ email, password });
         if (error) { msg.innerText = "❌ 账号或密码错误"; } 
         else { msg.innerText = "✅ 登录成功"; showApp(data.user.email); }
@@ -162,7 +164,6 @@
         fetchFavorites();
     }
 
-    // --- 1. 播放逻辑 (含省流控制) ---
     function log(msg) { document.getElementById('logs').innerText = msg; }
 
     async function startPlay(urlFromList) {
@@ -171,7 +172,7 @@
         if(urlFromList) document.getElementById('roomUrl').value = inputUrl;
 
         document.getElementById('qualitySelect').style.display = 'none';
-        log("⏳ 正在请求解析...");
+        log("⏳ 解析中...");
 
         try {
             const res = await fetch(`${BACKEND_URL}/api/play?url=${encodeURIComponent(inputUrl)}`);
@@ -192,7 +193,7 @@
 
             log("✅ 播放: " + data.default_quality);
             loadVideo(currentQualities[data.default_quality]);
-        } catch (e) { log("❌ 后端连接失败: " + e.message); }
+        } catch (e) { log("❌ 连接失败: " + e.message); }
     }
 
     function changeQuality() {
@@ -203,38 +204,21 @@
     function loadVideo(realUrl) {
         const videoElement = document.getElementById('videoElement');
         
-        // 销毁旧播放器
         if (flvPlayer) { flvPlayer.destroy(); flvPlayer = null; }
         if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
 
-        // --- 核心修改：绑定省流事件 ---
-        // 1. 监听暂停：一旦暂停，立刻停止加载数据
         videoElement.onpause = function() {
-            log("⏸️ 播放暂停，停止流量下载");
-            if(hlsPlayer) hlsPlayer.stopLoad(); // HLS 停止下载分片
-            if(flvPlayer) flvPlayer.unload();   // FLV 卸载流
+            log("⏸️ 暂停省流中");
+            if(hlsPlayer) hlsPlayer.stopLoad();
+            if(flvPlayer) flvPlayer.unload();
         };
 
-        // 2. 监听播放：一旦播放，立刻重新加载最新流 (回到 Live)
         videoElement.onplay = function() {
-            log("▶️ 恢复播放，正在同步最新画面...");
-            
-            if(flvPlayer) {
-                // FLV 需要重新 load 才能恢复
-                flvPlayer.load();
-                flvPlayer.play();
-            }
-            if(hlsPlayer) {
-                // HLS 重新开始下载，并跳到最新位置
-                hlsPlayer.startLoad();
-                // 尝试跳到直播最前沿 (Live Edge)
-                if(hlsPlayer.liveSyncPosition) {
-                    videoElement.currentTime = hlsPlayer.liveSyncPosition;
-                }
-            }
+            log("▶️ 恢复直播...");
+            if(flvPlayer) { flvPlayer.load(); flvPlayer.play(); }
+            if(hlsPlayer) { hlsPlayer.startLoad(); if(hlsPlayer.liveSyncPosition) videoElement.currentTime = hlsPlayer.liveSyncPosition; }
         };
 
-        // --- 初始化播放器 ---
         if (realUrl.includes('.flv')) {
             if (mpegts.getFeatureList().mseLivePlayback) {
                 flvPlayer = mpegts.createPlayer({ type: 'flv', isLive: true, url: realUrl });
@@ -254,7 +238,6 @@
         } else { videoElement.src = realUrl; videoElement.play(); }
     }
 
-    // --- 数据库逻辑 (不变) ---
     async function fetchFavorites() {
         const { data, error } = await db.from('favorites').select('*').order('created_at', { ascending: false });
         if (!error) { renderList(data); checkAllStatus(data); }
