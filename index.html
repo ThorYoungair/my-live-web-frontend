@@ -68,7 +68,7 @@
 
         .main-layout { display: flex; flex: 1; overflow: hidden; }
 
-        /* --- 左侧：纯净视频区 --- */
+        /* --- 左侧：沉浸式视频区 --- */
         .player-section { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 20px; position: relative; 
@@ -82,7 +82,12 @@
             box-shadow: 0 30px 80px rgba(0,0,0,0.6); 
             border: 1px solid var(--glass-border);
             display: flex; flex-direction: column; justify-content: center;
+            /* 鼠标不活动时隐藏光标 */
+            cursor: default; 
         }
+        /* 动态类：隐藏光标 */
+        #video-container.hide-cursor { cursor: none; }
+
         video { width: 100%; height: 100%; display: block; }
         video.fade-in { animation: fadeIn 0.8s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -98,22 +103,26 @@
         }
         #logs.show { opacity: 1; }
 
-        /* --- 底部悬浮控制栏 (美化版) --- */
+        /* --- 底部悬浮控制栏 (透明度调高版) --- */
         .video-controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
             height: 56px;
-            background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(15px);
+            /* ⬇️ 透明度调整：从 0.8 改为 0.5，更通透 */
+            background: rgba(15, 15, 20, 0.5); 
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             display: flex; align-items: center; padding: 0 16px; box-sizing: border-box;
-            gap: 16px; opacity: 0; transition: all 0.3s ease;
+            gap: 16px; 
+            opacity: 0; /* 默认隐藏 */
             transform: translateY(10px);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             z-index: 10;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        /* 交互：鼠标悬停视频显示 */
-        #video-container:hover .video-controls, 
-        .video-controls:hover { opacity: 1; transform: translateY(0); }
+        
+        /* 动态类：显示控制栏 */
+        .video-controls.visible { opacity: 1; transform: translateY(0); }
 
         .ctrl-btn {
             background: none; border: none; color: #ddd; cursor: pointer;
@@ -123,11 +132,10 @@
         .ctrl-btn:hover { background: rgba(255,255,255,0.1); color: white; }
         .ctrl-spacer { flex: 1; }
 
-        /* 音量控制区 */
         .volume-container { display: flex; align-items: center; gap: 8px; width: 140px; }
         .volume-slider {
             -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px;
-            background: rgba(255,255,255,0.2); outline: none; cursor: pointer;
+            background: rgba(255,255,255,0.3); outline: none; cursor: pointer;
         }
         .volume-slider::-webkit-slider-thumb {
             -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
@@ -135,7 +143,6 @@
         }
         .volume-slider:hover::-webkit-slider-thumb { transform: scale(1.2); }
 
-        /* 画质选择 (嵌入控制栏) */
         #qualitySelectContainer { position: relative; }
         #playerQualitySelect {
             background: transparent; color: #eee; 
@@ -153,7 +160,6 @@
             display: flex; flex-direction: column; border-left: 1px solid var(--glass-border); 
         }
         
-        /* 侧边栏：添加面板 */
         .add-panel { padding: 25px; border-bottom: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 12px; }
         .panel-title { font-size: 12px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
         
@@ -176,7 +182,6 @@
         .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border); }
         .btn-secondary:hover { background: rgba(255,255,255,0.1); }
 
-        /* 侧边栏：列表 */
         .sidebar-list-header { 
             padding: 15px 25px; border-bottom: 1px solid var(--glass-border); 
             display: flex; justify-content: space-between; align-items: center;
@@ -203,7 +208,6 @@
         @media (max-width: 768px) {
             .main-layout { flex-direction: column; }
             .sidebar { width: 100%; height: 50%; border-left: none; border-top: 1px solid var(--glass-border); }
-            #video-container:hover .video-controls { opacity: 1; }
         }
     </style>
 </head>
@@ -248,7 +252,7 @@
 
     <div class="main-layout">
         <div class="player-section">
-            <div id="video-container">
+            <div id="video-container" onmousemove="resetIdleTimer()" onmouseleave="forceHideControls()">
                 <video id="videoElement" muted></video>
                 <div id="logs">系统就绪</div>
 
@@ -281,7 +285,7 @@
             <div class="add-panel">
                 <div class="panel-title">添加直播</div>
                 <input type="text" id="roomUrl" class="sidebar-input" placeholder="粘贴直播间链接...">
-                <input type="text" id="roomName" class="sidebar-input" placeholder="给它起个名字 (可选)">
+                <input type="text" id="roomName" class="sidebar-input" placeholder="主播备注 (必填)">
                 <div class="action-row">
                     <button class="sidebar-btn btn-primary" onclick="startPlay()">
                         <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> 播放
@@ -315,16 +319,46 @@
     var hlsPlayer = null;
     var currentQualities = {}; 
     var deleteTargetId = null; 
+    
+    // --- ⬇️ 自动隐藏控制栏逻辑 ---
+    let idleTimer = null;
+    const controls = document.querySelector('.video-controls');
+    const container = document.getElementById('video-container');
 
-    // 初始化：绑定滚轮控制音量
+    function resetIdleTimer() {
+        // 鼠标移动时：显示控制栏，恢复光标
+        controls.classList.add('visible');
+        container.classList.remove('hide-cursor');
+        
+        clearTimeout(idleTimer);
+        // 3秒后无操作则隐藏
+        idleTimer = setTimeout(() => {
+            // 只有当视频在播放时才隐藏
+            const video = document.getElementById('videoElement');
+            if (video && !video.paused) {
+                controls.classList.remove('visible');
+                container.classList.add('hide-cursor');
+            }
+        }, 3000);
+    }
+
+    function forceHideControls() {
+        // 鼠标移出容器，立即隐藏（如果正在播放）
+        const video = document.getElementById('videoElement');
+        if (video && !video.paused) {
+            controls.classList.remove('visible');
+        }
+    }
+
+    // 绑定滚轮音量
     document.getElementById('video-container').addEventListener('wheel', (e) => {
         e.preventDefault();
         const video = document.getElementById('videoElement');
         let v = video.volume - (e.deltaY > 0 ? 0.1 : -0.1);
         if(v<0) v=0; if(v>1) v=1;
         setVolume(v);
-        // 同步滑块位置
         document.querySelector('.volume-slider').value = v;
+        resetIdleTimer(); // 滚动时也算活跃
     });
 
     document.addEventListener("visibilitychange", function() {
@@ -375,7 +409,6 @@
         return key.toUpperCase();
     }
 
-    // --- 播放控制逻辑 ---
     function togglePlay() {
         const video = document.getElementById('videoElement');
         const icon = document.getElementById('ctrlPlay');
@@ -400,7 +433,7 @@
         const slider = document.querySelector('.volume-slider');
         if(video.muted || video.volume === 0) {
             video.muted = false;
-            video.volume = 0.5; // 恢复到50%
+            video.volume = 0.5; 
             slider.value = 0.5;
         } else {
             video.muted = true;
@@ -479,6 +512,9 @@
             if(hlsPlayer) hlsPlayer.stopLoad();
             if(flvPlayer) flvPlayer.unload();
             playBtn.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            // 暂停时强制显示控制栏
+            controls.classList.add('visible');
+            container.classList.remove('hide-cursor');
         };
 
         videoElement.onplay = function() {
@@ -486,6 +522,8 @@
             if(flvPlayer) { flvPlayer.load(); flvPlayer.play(); }
             if(hlsPlayer) { hlsPlayer.startLoad(); if(hlsPlayer.liveSyncPosition) videoElement.currentTime = hlsPlayer.liveSyncPosition; }
             playBtn.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            // 开始播放后启动倒计时
+            resetIdleTimer();
         };
 
         if (realUrl.includes('.flv')) {
@@ -493,7 +531,6 @@
                 flvPlayer = mpegts.createPlayer({ type: 'flv', isLive: true, url: realUrl });
                 flvPlayer.attachMediaElement(videoElement);
                 flvPlayer.load();
-                // 默认静音播放，解决自动播放限制
                 videoElement.muted = true;
                 document.querySelector('.volume-slider').value = 0;
                 updateMuteIcon(0);
@@ -533,7 +570,6 @@
             if (data.is_live) {
                 const dot = document.getElementById(`dot-${item.id}`);
                 if(dot) dot.classList.add('status-online');
-                // 简单的排序逻辑，实际生产中建议操作数组
                 const card = document.getElementById(`card-${item.id}`);
                 const list = document.getElementById('roomList');
                 if(card) { list.removeChild(card); list.prepend(card); }
@@ -564,8 +600,12 @@
 
     async function saveRoom() {
         const url = document.getElementById('roomUrl').value;
-        const name = document.getElementById('roomName').value || "未命名";
-        if (!url) return;
+        const name = document.getElementById('roomName').value;
+        
+        if (!url) return alert("请填写直播间链接");
+        // ⬇️ 新增：必填校验
+        if (!name) return alert("请填写主播备注");
+
         await db.from('favorites').insert({ name, url });
         document.getElementById('roomName').value = '';
         fetchFavorites();
