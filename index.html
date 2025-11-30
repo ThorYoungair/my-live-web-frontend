@@ -5,7 +5,7 @@
     <title>My Multilive</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙂</text></svg>">
     <meta name="referrer" content="no-referrer">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -14,7 +14,7 @@
     <style>
         /* ==================== 1. 全局配置 ==================== */
         :root {
-            --glass-bg: rgba(20, 20, 25, 0.5); /* 侧边栏透明度 */
+            --glass-bg: rgba(20, 20, 25, 0.85);
             --glass-border: rgba(255, 255, 255, 0.08);
             --accent: #6366f1; 
             --accent-glow: rgba(99, 102, 241, 0.4);
@@ -22,16 +22,12 @@
             --text-sub: #94a3b8;
         }
 
-        * { box-sizing: border-box; }
-
         body { 
             margin: 0; padding: 0; 
             font-family: 'Inter', sans-serif; 
             background-color: #020617; 
             color: var(--text-main); 
-            height: 100vh; height: 100dvh; 
-            overflow: hidden; user-select: none;
-            -webkit-tap-highlight-color: transparent;
+            height: 100vh; overflow: hidden; user-select: none;
         }
 
         :root { color-scheme: dark; }
@@ -39,29 +35,19 @@
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
 
         /* 极光背景 */
-        .dynamic-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: #020617; overflow: hidden; }
-        .aurora-blob { position: absolute; border-radius: 50%; filter: blur(90px); mix-blend-mode: hard-light; opacity: 0.5; animation: drift ease-in-out infinite alternate; }
-        @keyframes drift {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0.5; }
-            50% { transform: translate(20vw, 15vh) scale(1.3) rotate(20deg); opacity: 0.7; }
-            100% { transform: translate(-15vw, -10vh) scale(0.9) rotate(-10deg); opacity: 0.4; }
-        }
-        .blob-1 { top: 0%; left: 0%; width: 60vw; height: 60vw; background: #7c3aed; animation-duration: 14s; }
-        .blob-2 { bottom: 0%; right: 0%; width: 70vw; height: 70vw; background: #06b6d4; animation-duration: 18s; animation-direction: alternate-reverse; }
-        .blob-3 { bottom: 20%; left: 10%; width: 50vw; height: 50vw; background: #db2777; animation-duration: 22s; }
-        .blob-4 { top: 10%; right: 20%; width: 60vw; height: 60vw; background: #4f46e5; opacity: 0.3; animation-duration: 26s; animation-direction: alternate-reverse; }
-
-        video::-webkit-media-controls-timeline,
-        video::-webkit-media-controls-current-time-display,
-        video::-webkit-media-controls-time-remaining-display,
-        video::-webkit-media-controls-timeline-container { display: none !important; }
+        .dynamic-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: #020617; }
+        .aurora-blob { position: absolute; border-radius: 50%; filter: blur(80px); mix-blend-mode: hard-light; opacity: 0.5; animation: move linear infinite alternate; }
+        .blob-1 { top: 10%; left: 10%; width: 50vw; height: 50vw; background: #7c3aed; animation-duration: 15s; }
+        .blob-2 { bottom: 10%; right: 10%; width: 60vw; height: 60vw; background: #06b6d4; animation-duration: 20s; animation-direction: alternate-reverse; }
+        .blob-3 { bottom: 30%; left: 20%; width: 40vw; height: 40vw; background: #db2777; animation-duration: 25s; }
+        @keyframes move { from { transform: translate(0, 0) scale(1); } to { transform: translate(10%, 5%) scale(1.1); } }
 
         /* ==================== 2. 弹窗层 ==================== */
         .modal-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); z-index: 9999; display: none; justify-content: center; align-items: center; }
         .modal-box { background: rgba(30, 30, 40, 0.9); border: 1px solid var(--glass-border); padding: 30px; border-radius: 24px; width: 320px; box-shadow: 0 40px 80px -12px rgba(0, 0, 0, 0.7); animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; align-items: center; text-align: center; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .login-input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: white; border-radius: 12px; outline: none; transition: 0.3s; font-size: 14px; margin-bottom: 10px; }
+        .login-input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: white; border-radius: 12px; outline: none; transition: 0.3s; font-size: 14px; box-sizing: border-box; margin-bottom: 10px; }
         .login-input:focus { border-color: var(--accent); background: rgba(0,0,0,0.6); }
         .btn-login { width: 100%; padding: 14px; margin-top: 10px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 15px; }
         .btn-login:hover { transform: scale(1.02); }
@@ -76,26 +62,17 @@
         /* ==================== 3. 主界面布局 ==================== */
         #main-app { display: none; height: 100%; flex-direction: column; }
         
-        header { 
-            height: calc(60px + env(safe-area-inset-top)); 
-            padding: calc(10px + env(safe-area-inset-top)) 25px 10px 25px;
-            display: flex; align-items: center; justify-content: space-between; 
-            background: rgba(255, 255, 255, 0.02); 
-            backdrop-filter: blur(10px); 
-            border-bottom: 1px solid var(--glass-border); 
-            flex-shrink: 0;
-        }
+        header { height: 60px; padding: 0 25px; display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); }
         h1 { margin: 0; font-size: 18px; font-weight: 800; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .btn-logout { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-sub); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; }
 
         .main-layout { display: flex; flex: 1; overflow: hidden; }
 
-        /* 左侧：视频区 */
+        /* 左侧：沉浸式视频区 */
         .player-section { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 20px; position: relative; 
             justify-content: center; align-items: center;
-            padding-left: env(safe-area-inset-left);
         }
 
         #video-container { 
@@ -113,7 +90,7 @@
         video.fade-in { animation: fadeIn 0.8s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Log (左上角) */
+        /* 系统 Log */
         #logs { 
             position: absolute; top: 20px; left: 20px; 
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
@@ -139,13 +116,12 @@
         }
         #volume-indicator.show { opacity: 1; }
 
-        /* --- ⬇️ 修改：完全圆润的底部控制栏 --- */
+        /* --- 底部悬浮控制栏 --- */
         .video-controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
-            height: 60px; /* 稍微加高一点 */
-            /* 圆角改为 50px 实现胶囊形 */
+            height: 60px;
             border-radius: 50px; 
-            background: rgba(15, 15, 20, 0.6); /* 透明度微调 */
+            background: rgba(15, 15, 20, 0.6); 
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1);
             display: flex; align-items: center; padding: 0 24px; 
@@ -159,13 +135,14 @@
 
         .ctrl-btn {
             background: none; border: none; color: #ddd; cursor: pointer;
-            width: 40px; height: 40px; padding: 8px; border-radius: 50%; /* 按钮也变圆 */
+            width: 40px; height: 40px; padding: 8px; border-radius: 50%; 
             transition: 0.2s; display: flex; align-items: center; justify-content: center;
         }
         .ctrl-btn:hover { background: rgba(255,255,255,0.15); color: white; transform: scale(1.1); }
         .ctrl-spacer { flex: 1; }
 
-        .volume-container { display: flex; align-items: center; gap: 10px; width: 150px; }
+        /* ⬇️ 调整音量容器，增加宽度以容纳大图标 */
+        .volume-container { display: flex; align-items: center; gap: 10px; width: 160px; }
         .volume-slider {
             -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px;
             background: rgba(255,255,255,0.3); outline: none; cursor: pointer;
@@ -182,7 +159,7 @@
             border: none; font-size: 13px; font-weight: 600;
             outline: none; cursor: pointer; text-align: right;
             font-family: 'Inter', sans-serif;
-            padding: 6px 12px; border-radius: 20px; /* 画质选择也变圆 */
+            padding: 6px 12px; border-radius: 20px;
         }
         #playerQualitySelect:hover { background: rgba(255,255,255,0.1); }
         #playerQualitySelect option { background-color: #222; color: white; }
@@ -190,7 +167,7 @@
         /* --- 右侧：功能侧边栏 --- */
         .sidebar { 
             width: 360px; 
-            background: var(--glass-bg); /* 已应用更通透的配置 */
+            background: var(--glass-bg); 
             backdrop-filter: blur(30px); 
             display: flex; flex-direction: column; 
             border-left: 1px solid var(--glass-border);
@@ -243,15 +220,7 @@
 
         @media (max-width: 768px) {
             .main-layout { flex-direction: column; }
-            .sidebar { 
-                width: 100%; height: auto; flex: 1; 
-                border-left: none; border-top: 1px solid var(--glass-border); 
-            }
-            .player-section { 
-                padding: 15px; flex: 0 0 auto; 
-                height: 40vh; 
-            }
-            #video-container:hover .video-controls { opacity: 1; }
+            .sidebar { width: 100%; height: 50%; border-left: none; border-top: 1px solid var(--glass-border); }
         }
     </style>
 </head>
@@ -304,12 +273,12 @@
 
                 <div class="video-controls">
                     <button class="ctrl-btn" id="ctrlPlay">
-                        <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     </button>
 
                     <div class="volume-container">
-                        <button class="ctrl-btn" id="ctrlMute" style="width:28px;">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                        <button class="ctrl-btn" id="ctrlMute" style="width:36px; height:36px;">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
                         </button>
                         <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="0" oninput="setVolume(this.value)">
                     </div>
@@ -321,7 +290,7 @@
                     </div>
 
                     <button class="ctrl-btn" id="ctrlFullScreen">
-                        <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
                     </button>
                 </div>
             </div>
@@ -396,14 +365,15 @@
         const percent = Math.round(vol * 100);
         let icon = '🔊';
         if (vol === 0) icon = '🔇';
-        else if (vol < 0.5) icon = '🔉';
+        else if (vol < 0.3) icon = '🔈';
+        else if (vol < 0.7) icon = '🔉';
+        
         el.innerText = `${icon} ${percent}%`;
         el.classList.add('show');
         clearTimeout(window.volTimeout);
         window.volTimeout = setTimeout(() => el.classList.remove('show'), 1000);
     }
 
-    // ⬇️ 修复：防止点击按钮时触发背景的播放暂停
     document.getElementById('ctrlPlay').addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
     document.getElementById('ctrlMute').addEventListener('click', (e) => { e.stopPropagation(); toggleMute(); });
     document.getElementById('ctrlFullScreen').addEventListener('click', (e) => { e.stopPropagation(); toggleFullScreen(); });
@@ -503,10 +473,10 @@
         const icon = document.getElementById('ctrlPlay');
         if (video.paused) {
             video.play();
-            icon.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
         } else {
             video.pause();
-            icon.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
         }
     }
 
@@ -533,16 +503,26 @@
             slider.value = 0;
             setVolume(0);
         }
-        updateMuteIcon(video.volume);
     }
 
+    // ⬇️ 优化：四态音量图标 (静音/低/中/高)
     function updateMuteIcon(vol) {
         const icon = document.getElementById('ctrlMute');
+        let path = '';
         if(vol == 0) {
-            icon.innerHTML = '<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+            // 静音
+            path = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+        } else if (vol < 0.3) {
+            // 低音 (无波纹)
+            path = '<path d="M7 9v6h4l5 5V4l-5 5H7z"/>';
+        } else if (vol < 0.7) {
+            // 中音 (单波纹)
+            path = '<path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>';
         } else {
-            icon.innerHTML = '<svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>';
+            // 高音 (双波纹)
+            path = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
         }
+        icon.innerHTML = `<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">${path}</svg>`;
     }
 
     function toggleFullScreen() {
@@ -610,7 +590,7 @@
             log("已暂停");
             if(hlsPlayer) hlsPlayer.stopLoad();
             if(flvPlayer) flvPlayer.unload();
-            playBtn.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            playBtn.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
             controls.classList.add('visible');
             container.classList.remove('hide-cursor');
         };
@@ -619,7 +599,7 @@
             log("正在同步画面...");
             if(flvPlayer) { flvPlayer.load(); flvPlayer.play(); }
             if(hlsPlayer) { hlsPlayer.startLoad(); if(hlsPlayer.liveSyncPosition) videoElement.currentTime = hlsPlayer.liveSyncPosition; }
-            playBtn.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            playBtn.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
             resetIdleTimer();
         };
 
