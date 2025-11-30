@@ -6,76 +6,300 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙂</text></svg>">
     <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="hls.min.js"></script>
     <script src="mpegts.min.js"></script>
     <style>
-        /* 全局样式 */
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; height: 100vh; overflow: hidden; }
-        
-        /* 登录层 */
-        #login-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .login-box { background: #1e1e1e; padding: 40px; border-radius: 10px; width: 300px; text-align: center; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .login-box h2 { margin-top: 0; color: #00d2ff; }
-        .login-input { width: 100%; padding: 12px; margin: 10px 0; background: #333; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; outline: none; }
-        .btn-login { width: 100%; padding: 12px; background: #00d2ff; color: #000; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        #login-msg { color: #ff4757; font-size: 14px; margin-top: 10px; min-height: 20px; }
+        /* ==================== 1. 全局配置 ==================== */
+        :root {
+            --glass-bg: rgba(20, 20, 25, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent: #6366f1; 
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
 
-        /* 主界面 */
-        #main-app { display: none; height: 100%; flex-direction: column; }
-        header { background: #1f1f1f; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; }
-        
-        /* ⬇️ 标题样式修改 */
-        h1 { margin: 0; font-size: 18px; color: #00d2ff; letter-spacing: 1px; font-weight: 600; }
-        
-        .user-info { font-size: 12px; color: #888; display: flex; align-items: center; gap: 10px; }
-        .btn-logout { background: #333; color: #ccc; border: 1px solid #555; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        
-        .main-layout { display: flex; flex: 1; overflow: hidden; }
-        .player-section { flex: 3; display: flex; flex-direction: column; padding: 20px; border-right: 1px solid #333; min-width: 0; }
-        
-        .input-group { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        input.app-input { flex: 1; padding: 10px 15px; background: #333; border: 1px solid #444; color: white; border-radius: 4px; outline: none; min-width: 150px; }
-        button.app-btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; white-space: nowrap; }
-        .btn-play { background: #00d2ff; color: #000; }
-        .btn-save { background: #ff4757; color: white; }
-        #qualitySelect { display: none; padding: 0 15px; background: #333; color: #00d2ff; border: 1px solid #00d2ff; border-radius: 4px; outline: none; cursor: pointer; height: 38px; }
-        
-        #video-container { flex: 1; background: black; border-radius: 8px; overflow: hidden; position: relative; min-height: 400px; }
-        video { width: 100%; height: 100%; display: block; object-fit: contain; }
-        video.fade-in { animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        body { 
+            margin: 0; padding: 0; 
+            font-family: 'Inter', sans-serif; 
+            background-color: #020617; /* 更深邃的黑 */
+            color: var(--text-main); 
+            height: 100vh; overflow: hidden; 
+        }
 
-        /* 隐藏进度条和时间 */
-        video::-webkit-media-controls-timeline { display: none !important; }
-        video::-webkit-media-controls-current-time-display { display: none !important; }
-        video::-webkit-media-controls-time-remaining-display { display: none !important; }
+        :root { color-scheme: dark; }
+
+        /* ⬇️ 重制版：动态多彩极光背景 */
+        .dynamic-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: -1; overflow: hidden; pointer-events: none;
+            background: #020617;
+        }
+        .aurora-blob {
+            position: absolute; border-radius: 50%;
+            filter: blur(60px); /* 减少模糊，让颜色更实 */
+            mix-blend-mode: hard-light; /* 强光混合，色彩更艳丽 */
+            opacity: 0.6;
+            animation: move linear infinite alternate;
+        }
+        /* 光斑1: 霓虹紫 */
+        .blob-1 {
+            top: 10%; left: 10%; width: 50vw; height: 50vw;
+            background: #7c3aed;
+            animation-duration: 8s;
+        }
+        /* 光斑2: 亮青色 */
+        .blob-2 {
+            bottom: 10%; right: 10%; width: 60vw; height: 60vw;
+            background: #06b6d4;
+            animation-duration: 10s; animation-direction: alternate-reverse;
+        }
+        /* 光斑3: 洋红色 */
+        .blob-3 {
+            bottom: 30%; left: 20%; width: 40vw; height: 40vw;
+            background: #db2777;
+            animation-duration: 12s;
+        }
+        /* 光斑4: 深蓝色 (底衬) */
+        .blob-4 {
+            top: -10%; right: 20%; width: 70vw; height: 70vw;
+            background: #4f46e5;
+            opacity: 0.4;
+            animation-duration: 15s;
+        }
+
+        @keyframes move {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(10%, 5%) scale(1.1); }
+        }
+
+        /* 其它样式保持一致 */
+        video::-webkit-media-controls-timeline,
+        video::-webkit-media-controls-current-time-display,
+        video::-webkit-media-controls-time-remaining-display,
         video::-webkit-media-controls-timeline-container { display: none !important; }
 
-        #logs { height: 30px; line-height: 30px; font-size: 12px; color: #888; margin-top: 5px; font-family: monospace; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        /* ==================== 2. 弹窗样式 ==================== */
+        .modal-layer { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(20px);
+            z-index: 9999; display: none; justify-content: center; align-items: center; 
+        }
+        .modal-box { 
+            background: rgba(30, 30, 40, 0.85); border: 1px solid var(--glass-border);
+            padding: 30px; border-radius: 24px; width: 320px; 
+            box-shadow: 0 40px 80px -12px rgba(0, 0, 0, 0.7); 
+            animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .login-box { padding: 40px; width: 340px; gap: 15px; }
+        .login-box h2 { margin: 0 0 10px 0; color: white; font-weight: 700; }
+        .login-input { 
+            width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.4); 
+            border: 1px solid var(--glass-border); color: white; border-radius: 12px; 
+            outline: none; transition: 0.3s; font-size: 14px; box-sizing: border-box;
+        }
+        .login-input:focus { border-color: var(--accent); background: rgba(0,0,0,0.6); }
+        .btn-login { 
+            width: 100%; padding: 14px; margin-top: 10px; background: var(--accent); 
+            color: white; border: none; border-radius: 12px; font-weight: 700; 
+            cursor: pointer; transition: 0.3s; font-size: 15px;
+        }
+        .btn-login:hover { transform: scale(1.02); box-shadow: 0 10px 20px -5px var(--accent-glow); }
+        #login-msg { color: var(--text-sub); font-size: 13px; min-height: 20px; font-weight: 500; }
+
+        .confirm-title { font-size: 18px; font-weight: 700; color: white; margin: 0 0 10px 0; }
+        .confirm-desc { font-size: 14px; color: var(--text-sub); margin: 0 0 25px 0; line-height: 1.5; }
+        .confirm-actions { display: flex; gap: 12px; width: 100%; }
+        .btn-cancel { 
+            flex: 1; padding: 12px; background: rgba(255,255,255,0.05); 
+            color: var(--text-main); border: 1px solid var(--glass-border); 
+            border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+        .btn-danger { 
+            flex: 1; padding: 12px; background: rgba(239, 68, 68, 0.15); 
+            color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); 
+            border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s;
+        }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.25); color: #f87171; border-color: rgba(239, 68, 68, 0.5); }
+
+        /* ==================== 3. 主界面 ==================== */
+        #main-app { display: none; height: 100%; flex-direction: column; }
         
-        .sidebar { flex: 1; background: #1a1a1a; display: flex; flex-direction: column; min-width: 320px; max-width: 400px; }
-        .sidebar-header { padding: 15px; font-weight: bold; border-bottom: 1px solid #333; background: #1f1f1f; display: flex; justify-content: space-between; }
-        .room-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .room-card { background: #252525; padding: 12px; margin-bottom: 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; border-left: 3px solid transparent; }
-        .room-card:hover { background: #333; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: #444; flex-shrink: 0; }
-        .status-online { background-color: #00ff00; box-shadow: 0 0 8px #00ff00; }
+        header { 
+            height: 60px; padding: 0 30px; display: flex; align-items: center; 
+            justify-content: space-between; background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border);
+        }
+        h1 { 
+            margin: 0; font-size: 18px; font-weight: 800; 
+            background: linear-gradient(to right, #fff, #94a3b8); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+        }
+        .btn-logout { 
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
+            color: var(--text-sub); padding: 8px 16px; border-radius: 8px; 
+            cursor: pointer; font-size: 12px; transition: 0.2s; font-weight: 600;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.1); color: white; }
+
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        .player-section { 
+            flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; position: relative;
+        }
+
+        .control-bar { 
+            display: flex; gap: 12px; align-items: center; 
+            background: rgba(0,0,0,0.2); padding: 8px; border-radius: 14px; 
+            border: 1px solid var(--glass-border); width: fit-content; max-width: 100%;
+        }
+
+        .input-wrapper { 
+            position: relative; display: flex; align-items: center; 
+            background: rgba(255,255,255,0.05); border-radius: 8px; transition: 0.3s;
+            border: 1px solid transparent; height: 44px;
+        }
+        .input-wrapper:focus-within { border-color: var(--accent); background: rgba(0,0,0,0.4); }
+        .input-icon { position: absolute; left: 10px; width: 16px; height: 16px; opacity: 0.5; pointer-events: none; }
+        .app-input { 
+            background: transparent; border: none; color: white; padding: 0 10px 0 34px; 
+            outline: none; font-size: 14px; width: 260px; height: 100%; font-family: 'Inter', sans-serif;
+        }
+        #roomName { width: 120px; }
+
+        #qualityControl {
+            display: none; align-items: center; background: rgba(255,255,255,0.05);
+            border-radius: 8px; padding: 0 8px 0 12px; height: 44px;
+            border: 1px solid transparent; transition: 0.3s;
+        }
+        #qualityControl:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.1); }
+        .quality-label {
+            font-size: 12px; font-weight: 600; color: var(--text-sub); 
+            margin-right: 4px; white-space: nowrap;
+        }
+        #qualitySelect { 
+            background: transparent; color: white; border: none; 
+            outline: none; cursor: pointer; font-family: 'Inter', sans-serif; 
+            font-size: 13px; height: 100%; font-weight: 500; text-transform: uppercase; /* 强制大写 */
+        }
+        #qualitySelect option { background-color: #1e1e24; color: white; padding: 10px; }
+
+        .icon-btn { 
+            display: flex; align-items: center; gap: 6px; height: 44px;
+            padding: 0 18px; border: none; border-radius: 8px; 
+            cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .btn-play { background: var(--accent); color: white; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
+        .btn-play:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.5); }
+        .btn-play:active { transform: scale(0.95); }
+        .btn-save { background: transparent; color: var(--text-sub); border: 1px solid var(--glass-border); }
+        .btn-save:hover { background: rgba(255,255,255,0.1); color: white; border-color: white; }
+
+        #video-container { 
+            flex: 1; background: #000; border-radius: 16px; 
+            overflow: hidden; position: relative; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5); 
+            border: 1px solid var(--glass-border);
+        }
+        video { width: 100%; height: 100%; display: block; }
+        video.fade-in { animation: fadeIn 0.8s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #logs { 
+            position: absolute; bottom: 30px; left: 30px; 
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+            padding: 8px 16px; border-radius: 20px; 
+            font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+            color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); 
+            pointer-events: none; display: flex; align-items: center; gap: 8px; transition: 0.3s;
+        }
+        #logs::before { content: ''; display: block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
+
+        .sidebar { 
+            width: 340px; background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(20px); 
+            display: flex; flex-direction: column; border-left: 1px solid var(--glass-border); 
+        }
+        .sidebar-header { 
+            padding: 20px; border-bottom: 1px solid var(--glass-border);
+            display: flex; justify-content: space-between; align-items: baseline;
+        }
+        .header-title {
+            font-size: 13px; font-weight: 700; color: var(--text-sub); 
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        #loading-status {
+            font-size: 11px; font-weight: 500; color: var(--accent);
+            opacity: 0.8; letter-spacing: 0.5px;
+        }
+
+        .room-list { flex: 1; overflow-y: auto; padding: 15px; }
+
+        .room-card { 
+            background: rgba(255,255,255,0.03); padding: 14px; margin-bottom: 10px; border-radius: 12px; 
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex; align-items: center; gap: 12px; border: 1px solid transparent; 
+            animation: slideIn 0.3s ease-out backwards;
+        }
+        .room-card:hover { 
+            background: rgba(255,255,255,0.08); transform: translateY(-2px); 
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: 0.3s; }
+        .status-online { background: #10b981; box-shadow: 0 0 10px #10b981; transform: scale(1.2); }
         .room-info { flex: 1; overflow: hidden; }
-        .room-name { font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+        .room-name { font-weight: 600; font-size: 14px; color: #fff; margin-bottom: 3px; }
         .room-url { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .btn-delete { background: transparent; color: #555; font-size: 18px; padding: 5px; width: 30px; }
+        .btn-delete { border: none; background: transparent; color: #555; cursor: pointer; padding: 6px; border-radius: 6px; transition: 0.2s; }
+        .btn-delete:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        @media (max-width: 768px) {
+            .main-layout { flex-direction: column; }
+            .control-bar { flex-direction: column; width: 100%; align-items: stretch; }
+            .app-input { width: 100%; }
+            #roomName { width: 100%; }
+            .player-section { padding: 15px; }
+            #logs { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<div id="login-layer">
-    <div class="login-box">
-        <h2>🔒 私有直播间</h2>
-        <input type="email" id="email" class="login-input" placeholder="账号">
-        <input type="password" id="password" class="login-input" placeholder="密码">
-        <button class="btn-login" onclick="handleLogin()">进入系统</button>
+<div class="dynamic-bg">
+    <div class="aurora-blob blob-1"></div>
+    <div class="aurora-blob blob-2"></div>
+    <div class="aurora-blob blob-3"></div>
+    <div class="aurora-blob blob-4"></div>
+</div>
+
+<div id="login-layer" class="modal-layer" style="display: flex;">
+    <div class="login-box modal-box">
+        <h2>👋 欢迎回来</h2>
+        <input type="email" id="email" class="login-input" placeholder="账号" onkeyup="if(event.key==='Enter') handleLogin()">
+        <input type="password" id="password" class="login-input" placeholder="密码" onkeyup="if(event.key==='Enter') handleLogin()">
+        <button class="btn-login" onclick="handleLogin()">登录</button>
         <div id="login-msg"></div>
+    </div>
+</div>
+
+<div id="confirm-layer" class="modal-layer">
+    <div class="modal-box">
+        <h3 class="confirm-title">移除确认</h3>
+        <p class="confirm-desc">确定要将此直播间从收藏夹移除吗？</p>
+        <div class="confirm-actions">
+            <button class="btn-cancel" onclick="closeConfirm()">取消</button>
+            <button class="btn-danger" onclick="executeDelete()">移除</button>
+        </div>
     </div>
 </div>
 
@@ -90,23 +314,41 @@
 
     <div class="main-layout">
         <div class="player-section">
-            <div class="input-group">
-                <input type="text" id="roomUrl" class="app-input" placeholder="粘贴直播间链接 (抖音/B站/虎牙...)">
-                <input type="text" id="roomName" class="app-input" placeholder="给它起个名字" style="flex: 0.5;">
-                <select id="qualitySelect" onchange="changeQuality()"></select>
-                <button class="app-btn btn-play" onclick="startPlay()">播放</button>
-                <button class="app-btn btn-save" onclick="saveRoom()">❤ 收藏</button>
+            <div class="control-bar">
+                <div class="input-wrapper">
+                    <svg class="input-icon" fill="white" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+                    <input type="text" id="roomUrl" class="app-input" placeholder="直播间链接">
+                </div>
+                <div class="input-wrapper">
+                    <svg class="input-icon" fill="white" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                    <input type="text" id="roomName" class="app-input" placeholder="备注名">
+                </div>
+                
+                <div id="qualityControl">
+                    <span class="quality-label">画质</span>
+                    <select id="qualitySelect" onchange="changeQuality()"></select>
+                </div>
+                
+                <button class="icon-btn btn-play" onclick="startPlay()">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    播放
+                </button>
+                <button class="icon-btn btn-save" onclick="saveRoom()">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    收藏
+                </button>
             </div>
+
             <div id="video-container">
                 <video id="videoElement" controls muted></video>
+                <div id="logs">系统就绪</div>
             </div>
-            <div id="logs">欢迎回来...</div>
         </div>
 
         <div class="sidebar">
             <div class="sidebar-header">
-                <span>我的收藏</span>
-                <span id="loading-status" style="font-size:12px; font-weight:normal; color:#888;"></span>
+                <span class="header-title">我的收藏</span>
+                <span id="loading-status"></span>
             </div>
             <div class="room-list" id="roomList"></div>
         </div>
@@ -126,13 +368,14 @@
     var flvPlayer = null;
     var hlsPlayer = null;
     var currentQualities = {}; 
+    var deleteTargetId = null; 
 
     document.addEventListener("visibilitychange", function() {
         const video = document.getElementById('videoElement');
         if (document.hidden) {
             if (!video.paused) {
                 video.pause(); 
-                log("⏸️ 切到后台，已暂停省流");
+                log("已切到后台 (省流模式)");
             }
         }
     });
@@ -146,11 +389,20 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const msg = document.getElementById('login-msg');
-        if(!email || !password) { msg.innerText = "请输入账号密码"; return; }
+        if(!email || !password) { msg.innerText = "请输入账号密码"; msg.style.color = "#ef4444"; return; }
+        
         msg.innerText = "验证中...";
+        msg.style.color = "var(--text-sub)";
+
         const { data, error } = await db.auth.signInWithPassword({ email, password });
-        if (error) { msg.innerText = "❌ 账号或密码错误"; } 
-        else { msg.innerText = "✅ 登录成功"; showApp(data.user.email); }
+        if (error) { 
+            msg.innerText = "❌ 账号或密码错误"; 
+            msg.style.color = "#ef4444"; 
+        } else { 
+            msg.innerText = "✅ 登录成功"; 
+            msg.style.color = "#10b981"; 
+            showApp(data.user.email); 
+        }
     }
 
     async function handleLogout() {
@@ -166,34 +418,59 @@
 
     function log(msg) { document.getElementById('logs').innerText = msg; }
 
+    // --- ⬇️ 更新后的纯净版画质解析 ---
+    function formatQuality(key) {
+        key = key.toLowerCase();
+        
+        // 1. 特殊关键字映射
+        if (['best', 'source', 'chunked'].includes(key)) return 'Source';
+        if (['worst', 'mobile'].includes(key)) return 'Mobile';
+        if (key === 'audio_only') return 'Audio Only';
+
+        // 2. 纯分辨率格式化 (例如 1080p60 -> 1080P 60)
+        // 使用正则提取数字、p、帧率
+        if (key.includes('p')) {
+            // 将 p 替换为 P，如果有 60 等数字则加空格
+            return key.replace('p', 'P ').toUpperCase().trim();
+        }
+
+        // 3. 兜底：直接显示大写英文
+        return key.toUpperCase();
+    }
+
     async function startPlay(urlFromList) {
         const inputUrl = urlFromList || document.getElementById('roomUrl').value;
         if (!inputUrl) return alert('请输入地址');
         if(urlFromList) document.getElementById('roomUrl').value = inputUrl;
 
-        document.getElementById('qualitySelect').style.display = 'none';
-        log("⏳ 解析中...");
+        document.getElementById('qualityControl').style.display = 'none';
+        log("正在解析直播流...");
 
         try {
             const res = await fetch(`${BACKEND_URL}/api/play?url=${encodeURIComponent(inputUrl)}`);
             const data = await res.json();
 
-            if (data.status === 'error') { log("❌ " + data.message); return; }
+            if (data.status === 'error') { log(data.message); return; }
             
             currentQualities = data.qualities;
             const select = document.getElementById('qualitySelect');
             select.innerHTML = ''; 
             for (let q in currentQualities) {
                 let option = document.createElement('option');
-                option.value = q; option.innerText = q;
+                option.value = q; 
+                // ⬇️ 使用新的格式化函数
+                option.innerText = formatQuality(q);
                 select.appendChild(option);
             }
             select.value = data.default_quality;
-            if (Object.keys(currentQualities).length > 1) select.style.display = 'block';
+            
+            if (Object.keys(currentQualities).length > 1) {
+                document.getElementById('qualityControl').style.display = 'flex';
+            }
 
-            log("✅ 播放: " + data.default_quality);
+            log("已连接: " + formatQuality(data.default_quality));
             loadVideo(currentQualities[data.default_quality]);
-        } catch (e) { log("❌ 连接失败: " + e.message); }
+        } catch (e) { log("连接超时"); }
     }
 
     function changeQuality() {
@@ -207,14 +484,18 @@
         if (flvPlayer) { flvPlayer.destroy(); flvPlayer = null; }
         if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
 
+        videoElement.classList.remove('fade-in');
+        void videoElement.offsetWidth;
+        videoElement.classList.add('fade-in');
+
         videoElement.onpause = function() {
-            log("⏸️ 暂停省流中");
+            log("已暂停 (停止下载)");
             if(hlsPlayer) hlsPlayer.stopLoad();
             if(flvPlayer) flvPlayer.unload();
         };
 
         videoElement.onplay = function() {
-            log("▶️ 恢复直播...");
+            log("正在同步画面...");
             if(flvPlayer) { flvPlayer.load(); flvPlayer.play(); }
             if(hlsPlayer) { hlsPlayer.startLoad(); if(hlsPlayer.liveSyncPosition) videoElement.currentTime = hlsPlayer.liveSyncPosition; }
         };
@@ -244,7 +525,7 @@
     }
 
     async function checkAllStatus(items) {
-        document.getElementById('loading-status').innerText = "(检测中...)";
+        document.getElementById('loading-status').innerText = "正在检测直播状态…";
         for (let item of items) checkOneRoom(item);
     }
 
@@ -267,17 +548,17 @@
     function renderList(favorites) {
         const listDiv = document.getElementById('roomList');
         listDiv.innerHTML = ''; 
-        if (!favorites || favorites.length === 0) { listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">暂无收藏</div>'; return; }
-        favorites.forEach(item => {
+        if (!favorites || favorites.length === 0) { listDiv.innerHTML = '<div style="padding:40px; text-align:center; color:#555; font-size:13px;">暂无收藏</div>'; return; }
+        favorites.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'room-card';
+            div.style.animationDelay = `${index * 0.05}s`; 
             div.id = `card-${item.id}`;
             div.onclick = function() { startPlay(item.url); };
             div.innerHTML = `
                 <div class="status-dot" id="dot-${item.id}"></div>
                 <div class="room-info">
                     <div class="room-name">${item.name}</div>
-                    <div class="room-url">${item.url}</div>
                 </div>
                 <button class="btn-delete" onclick="event.stopPropagation(); deleteRoom(${item.id})">✖</button>
             `;
@@ -294,8 +575,21 @@
         fetchFavorites();
     }
 
-    async function deleteRoom(id) {
-        if(confirm("确定删除？")) { await db.from('favorites').delete().eq('id', id); fetchFavorites(); }
+    function deleteRoom(id) {
+        deleteTargetId = id; 
+        document.getElementById('confirm-layer').style.display = 'flex'; 
+    }
+
+    function closeConfirm() {
+        document.getElementById('confirm-layer').style.display = 'none'; 
+        deleteTargetId = null;
+    }
+
+    async function executeDelete() {
+        if (!deleteTargetId) return;
+        await db.from('favorites').delete().eq('id', deleteTargetId);
+        fetchFavorites();
+        closeConfirm();
     }
 </script>
 </body>
