@@ -29,7 +29,6 @@
             font-family: 'Inter', sans-serif; 
             background-color: #020617; 
             color: var(--text-main); 
-            /* ⬇️ 强制占满屏幕，禁止全局滚动 */
             height: 100vh; height: 100dvh; 
             width: 100vw;
             overflow: hidden; 
@@ -69,7 +68,6 @@
         #main-app { display: none; height: 100%; flex-direction: column; }
         
         header { 
-            /* ⬇️ 适配刘海屏，给顶部增加安全距离 */
             height: calc(56px + env(safe-area-inset-top)); 
             padding: calc(10px + env(safe-area-inset-top)) 20px 10px 20px;
             display: flex; align-items: center; justify-content: space-between; 
@@ -83,12 +81,11 @@
 
         .main-layout { display: flex; flex: 1; overflow: hidden; height: 100%; }
 
-        /* --- 左侧：沉浸式视频区 --- */
+        /* 左侧视频 */
         .player-section { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 20px; position: relative; 
             justify-content: center; align-items: center;
-            /* ⬇️ 防止横屏时视频被刘海挡住 */
             padding-left: max(20px, env(safe-area-inset-left));
         }
 
@@ -103,17 +100,15 @@
         }
         #video-container.hide-cursor { cursor: none; }
 
-        /* ⬇️⬇️⬇️ 视频全屏适配核心 ⬇️⬇️⬇️ */
         video { 
             width: 100%; height: 100%; 
             display: block; 
-            /* 强制保持比例，完整显示画面，不裁切 */
             object-fit: contain; 
         }
         video.fade-in { animation: fadeIn 0.8s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 全屏时的特殊样式：确保绝对居中 */
+        /* 全屏修正 */
         #video-container:fullscreen {
             display: flex; justify-content: center; align-items: center;
             background: black;
@@ -123,7 +118,6 @@
             width: 100%; height: 100%; max-width: 100vw; max-height: 100vh;
         }
 
-        /* 系统 Log */
         #logs { 
             position: absolute; top: 20px; left: 20px; 
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
@@ -134,7 +128,6 @@
         }
         #logs.show { opacity: 1; }
 
-        /* 音量 OSD */
         #volume-indicator {
             position: absolute; top: 50%; left: 50%; 
             transform: translate(-50%, -50%);
@@ -149,7 +142,7 @@
         }
         #volume-indicator.show { opacity: 1; }
 
-        /* --- 底部控制栏 --- */
+        /* 底部控制栏 */
         .video-controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
             height: 60px;
@@ -196,7 +189,7 @@
         #playerQualitySelect:hover { background: rgba(255,255,255,0.1); }
         #playerQualitySelect option { background-color: #222; color: white; }
 
-        /* --- 右侧：功能侧边栏 --- */
+        /* 右侧侧边栏 */
         .sidebar { 
             width: 360px; 
             background: var(--glass-bg); 
@@ -250,43 +243,17 @@
         .btn-delete { border: none; background: transparent; color: #555; padding: 5px; cursor: pointer; font-size: 16px; border-radius: 4px; }
         .btn-delete:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
 
-        /* ⬇️⬇️⬇️ 移动端布局重写：一屏流体验 ⬇️⬇️⬇️ */
         @media (max-width: 768px) {
-            .main-layout { 
-                flex-direction: column; 
-                height: 100%; /* 继承 body 的 100dvh */
-                overflow: hidden;
+            .main-layout { flex-direction: column; }
+            .sidebar { 
+                width: 100%; height: auto; flex: 1; 
+                border-left: none; border-top: 1px solid var(--glass-border); 
             }
             .player-section { 
-                /* 视频区域固定占屏幕的 ~35%，不做任何内边距，完全贴边 */
-                flex: 0 0 35%; 
-                padding: 0; 
-                background: black;
-                z-index: 10;
+                padding: 15px; flex: 0 0 auto; 
+                height: 40vh; 
             }
-            #video-container {
-                border-radius: 0; /* 移动端不需要圆角 */
-                border: none;
-                box-shadow: none;
-            }
-            /* 侧边栏占满剩余空间 */
-            .sidebar { 
-                flex: 1; /* 自动填满剩下空间 */
-                width: 100%; 
-                height: auto;
-                min-height: 0; /* 关键：允许 flex 子元素收缩，防止溢出 */
-                border-left: none; 
-                border-top: 1px solid var(--glass-border); 
-            }
-            /* 移动端控制栏调整 */
-            .video-controls {
-                bottom: 10px; left: 10px; right: 10px;
-                height: 50px;
-                padding: 0 15px;
-            }
-            /* 音量条在手机上可能太挤，可以隐藏或简化 */
-            .volume-container { width: auto; }
-            .volume-slider { width: 60px; }
+            #video-container:hover .video-controls { opacity: 1; }
         }
     </style>
 </head>
@@ -401,6 +368,7 @@
     var currentQualities = {}; 
     var deleteTargetId = null; 
     var lastVolume = parseFloat(localStorage.getItem('playerVolume')) || 0.5;
+    var currentGlobalUrl = ""; // ⬇️ 新增：记录当前直播间的 URL
     
     let idleTimer = null;
     const controls = document.querySelector('.video-controls');
@@ -440,7 +408,6 @@
         window.volTimeout = setTimeout(() => el.classList.remove('show'), 1000);
     }
 
-    // 防止冒泡：点击按钮不触发视频背景的点击事件
     document.getElementById('ctrlPlay').addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
     document.getElementById('ctrlMute').addEventListener('click', (e) => { e.stopPropagation(); toggleMute(); });
     document.getElementById('ctrlFullScreen').addEventListener('click', (e) => { e.stopPropagation(); toggleFullScreen(); });
@@ -490,7 +457,11 @@
     document.addEventListener("visibilitychange", function() {
         const video = document.getElementById('videoElement');
         if (document.hidden) {
-            if (!video.paused) { togglePlay(); log("已切到后台 (省流)"); }
+            if (!video.paused) { 
+                // 切后台只暂停，不重载，省流量
+                video.pause(); 
+                log("已切到后台 (省流)"); 
+            }
         }
     });
 
@@ -535,13 +506,22 @@
         return key.toUpperCase();
     }
 
+    // --- ⬇️ 核心修复：Play = 重载流 ---
     function togglePlay() {
         const video = document.getElementById('videoElement');
         const icon = document.getElementById('ctrlPlay');
+        
         if (video.paused) {
-            video.play();
-            icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            // 如果是暂停状态，且有当前链接，则重新加载以同步直播流
+            if (currentGlobalUrl) {
+                // UI 变更为播放状态 (加载中)
+                icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+                startPlay(currentGlobalUrl); // 👈 关键修改：重新解析播放
+            } else {
+                video.play();
+            }
         } else {
+            // 如果是播放状态，直接暂停 (省流)
             video.pause();
             icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
         }
@@ -570,8 +550,10 @@
             slider.value = 0;
             setVolume(0);
         }
+        updateMuteIcon(video.volume);
     }
 
+    // ⬇️ 优化：四态音量图标
     function updateMuteIcon(vol) {
         const icon = document.getElementById('ctrlMute');
         let path = '';
@@ -597,6 +579,9 @@
         const inputUrl = urlFromList || document.getElementById('roomUrl').value;
         if (!inputUrl) return alert('请输入地址');
         if(urlFromList) document.getElementById('roomUrl').value = inputUrl;
+
+        // ⬇️ 记录当前播放的 URL
+        currentGlobalUrl = inputUrl;
 
         document.getElementById('qualitySelectContainer').style.display = 'none';
         log("正在解析直播流...");
@@ -648,6 +633,7 @@
         slider.value = lastVolume;
         updateMuteIcon(lastVolume);
 
+        // ⬇️ 状态更新逻辑保持不变，但触发源已变
         videoElement.onpause = function() {
             log("已暂停");
             if(hlsPlayer) hlsPlayer.stopLoad();
