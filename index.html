@@ -17,7 +17,6 @@
             --glass-bg: rgba(20, 20, 25, 0.7);
             --glass-border: rgba(255, 255, 255, 0.08);
             --accent: #6366f1; 
-            --accent-glow: rgba(99, 102, 241, 0.4);
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
         }
@@ -27,212 +26,133 @@
             font-family: 'Inter', sans-serif; 
             background-color: #020617; 
             color: var(--text-main); 
-            height: 100vh; overflow: hidden; 
+            height: 100vh; overflow: hidden; user-select: none;
         }
 
         :root { color-scheme: dark; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-        /* ⬇️ 极光背景 (保持多彩快速) */
-        .dynamic-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: -1; overflow: hidden; pointer-events: none;
-            background: #020617;
-        }
-        .aurora-blob {
-            position: absolute; border-radius: 50%;
-            filter: blur(60px); mix-blend-mode: hard-light; opacity: 0.6;
-            animation: move linear infinite alternate;
-        }
+        /* 极光背景 */
+        .dynamic-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: #020617; }
+        .aurora-blob { position: absolute; border-radius: 50%; filter: blur(60px); mix-blend-mode: hard-light; opacity: 0.6; animation: move linear infinite alternate; }
         .blob-1 { top: 10%; left: 10%; width: 50vw; height: 50vw; background: #7c3aed; animation-duration: 8s; }
         .blob-2 { bottom: 10%; right: 10%; width: 60vw; height: 60vw; background: #06b6d4; animation-duration: 10s; animation-direction: alternate-reverse; }
         .blob-3 { bottom: 30%; left: 20%; width: 40vw; height: 40vw; background: #db2777; animation-duration: 12s; }
         .blob-4 { top: -10%; right: 20%; width: 70vw; height: 70vw; background: #4f46e5; opacity: 0.4; animation-duration: 15s; }
         @keyframes move { from { transform: translate(0, 0) scale(1); } to { transform: translate(10%, 5%) scale(1.1); } }
 
-        video::-webkit-media-controls-timeline,
-        video::-webkit-media-controls-current-time-display,
-        video::-webkit-media-controls-time-remaining-display,
-        video::-webkit-media-controls-timeline-container { display: none !important; }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-
         /* ==================== 2. 弹窗层 ==================== */
-        .modal-layer { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(20px);
-            z-index: 9999; display: none; justify-content: center; align-items: center; 
-        }
-        .modal-box { 
-            background: rgba(30, 30, 40, 0.85); border: 1px solid var(--glass-border);
-            padding: 30px; border-radius: 24px; width: 320px; 
-            box-shadow: 0 40px 80px -12px rgba(0, 0, 0, 0.7); 
-            animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            display: flex; flex-direction: column; align-items: center; text-align: center;
-        }
+        .modal-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(20px); z-index: 9999; display: none; justify-content: center; align-items: center; }
+        .modal-box { background: rgba(30, 30, 40, 0.85); border: 1px solid var(--glass-border); padding: 30px; border-radius: 24px; width: 320px; box-shadow: 0 40px 80px -12px rgba(0, 0, 0, 0.7); animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; align-items: center; text-align: center; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .login-box { padding: 40px; width: 340px; gap: 15px; }
-        .login-box h2 { margin: 0 0 10px 0; color: white; font-weight: 700; }
-        .login-input { 
-            width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.4); 
-            border: 1px solid var(--glass-border); color: white; border-radius: 12px; 
-            outline: none; transition: 0.3s; font-size: 14px; box-sizing: border-box;
-        }
+        
+        .login-input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: white; border-radius: 12px; outline: none; transition: 0.3s; font-size: 14px; box-sizing: border-box; margin-bottom: 10px; }
         .login-input:focus { border-color: var(--accent); background: rgba(0,0,0,0.6); }
-        .btn-login { 
-            width: 100%; padding: 14px; margin-top: 10px; background: var(--accent); 
-            color: white; border: none; border-radius: 12px; font-weight: 700; 
-            cursor: pointer; transition: 0.3s; font-size: 15px;
-        }
-        .btn-login:hover { transform: scale(1.02); box-shadow: 0 10px 20px -5px var(--accent-glow); }
-        #login-msg { color: var(--text-sub); font-size: 13px; min-height: 20px; font-weight: 500; }
-
+        .btn-login { width: 100%; padding: 14px; margin-top: 10px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 15px; }
+        .btn-login:hover { transform: scale(1.02); }
+        #login-msg { color: var(--text-sub); font-size: 13px; min-height: 20px; font-weight: 500; margin-top: 10px; }
+        
         .confirm-title { font-size: 18px; font-weight: 700; color: white; margin: 0 0 10px 0; }
-        .confirm-desc { font-size: 14px; color: var(--text-sub); margin: 0 0 25px 0; line-height: 1.5; }
+        .confirm-desc { font-size: 14px; color: var(--text-sub); margin: 0 0 25px 0; }
         .confirm-actions { display: flex; gap: 12px; width: 100%; }
-        .btn-cancel { 
-            flex: 1; padding: 12px; background: rgba(255,255,255,0.05); 
-            color: var(--text-main); border: 1px solid var(--glass-border); 
-            border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s;
-        }
-        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
-        .btn-danger { 
-            flex: 1; padding: 12px; background: rgba(239, 68, 68, 0.15); 
-            color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); 
-            border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s;
-        }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.25); color: #f87171; border-color: rgba(239, 68, 68, 0.5); }
+        .btn-cancel { flex: 1; padding: 12px; background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn-danger { flex: 1; padding: 12px; background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; cursor: pointer; font-weight: 600; }
 
         /* ==================== 3. 主界面 ==================== */
         #main-app { display: none; height: 100%; flex-direction: column; }
         
-        header { 
-            height: 60px; padding: 0 30px; display: flex; align-items: center; 
-            justify-content: space-between; background: rgba(255, 255, 255, 0.03); 
-            backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border);
-        }
-        h1 { 
-            margin: 0; font-size: 18px; font-weight: 800; 
-            background: linear-gradient(to right, #fff, #94a3b8); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-        }
-        .btn-logout { 
-            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
-            color: var(--text-sub); padding: 8px 16px; border-radius: 8px; 
-            cursor: pointer; font-size: 12px; transition: 0.2s; font-weight: 600;
-        }
-        .btn-logout:hover { background: rgba(255,255,255,0.1); color: white; }
+        header { height: 60px; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); }
+        h1 { margin: 0; font-size: 18px; font-weight: 800; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn-logout { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-sub); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; }
 
         .main-layout { display: flex; flex: 1; overflow: hidden; }
-        .player-section { 
-            flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; position: relative;
-        }
+        .player-section { flex: 1; display: flex; flex-direction: column; padding: 30px; gap: 20px; position: relative; }
 
-        .control-bar { 
-            display: flex; gap: 12px; align-items: center; 
-            background: rgba(0,0,0,0.2); padding: 8px; border-radius: 14px; 
-            border: 1px solid var(--glass-border); width: fit-content; max-width: 100%;
-        }
-
-        .input-wrapper { 
-            position: relative; display: flex; align-items: center; 
-            background: rgba(255,255,255,0.05); border-radius: 8px; transition: 0.3s;
-            border: 1px solid transparent; height: 44px;
-        }
+        .control-bar { display: flex; gap: 12px; align-items: center; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 14px; border: 1px solid var(--glass-border); width: fit-content; max-width: 100%; }
+        
+        .input-wrapper { position: relative; display: flex; align-items: center; background: rgba(255,255,255,0.05); border-radius: 8px; transition: 0.3s; border: 1px solid transparent; height: 44px; }
         .input-wrapper:focus-within { border-color: var(--accent); background: rgba(0,0,0,0.4); }
         .input-icon { position: absolute; left: 10px; width: 16px; height: 16px; opacity: 0.5; pointer-events: none; }
-        .app-input { 
-            background: transparent; border: none; color: white; padding: 0 10px 0 34px; 
-            outline: none; font-size: 14px; width: 260px; height: 100%; font-family: 'Inter', sans-serif;
-        }
+        .app-input { background: transparent; border: none; color: white; padding: 0 10px 0 34px; outline: none; font-size: 14px; width: 260px; height: 100%; font-family: 'Inter', sans-serif; }
         #roomName { width: 120px; }
 
-        #qualityControl {
-            display: none; align-items: center; background: rgba(255,255,255,0.05);
-            border-radius: 8px; padding: 0 8px 0 12px; height: 44px;
-            border: 1px solid transparent; transition: 0.3s;
-        }
-        #qualityControl:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.1); }
-        .quality-label {
-            font-size: 12px; font-weight: 600; color: var(--text-sub); 
-            margin-right: 4px; white-space: nowrap;
-        }
-        
-        /* ⬇️ 下拉菜单样式强制深色 */
-        #qualitySelect { 
-            background: transparent; color: white; border: none; 
-            outline: none; cursor: pointer; font-family: 'Inter', sans-serif; 
-            font-size: 13px; height: 100%; font-weight: 600; /* 加粗一点 */
-        }
-        /* ⬇️ 确保点开后的选项也是深色的 */
-        #qualitySelect option { 
-            background-color: #1e1e24; color: white; padding: 10px; 
-        }
-
-        .icon-btn { 
-            display: flex; align-items: center; gap: 6px; height: 44px;
-            padding: 0 18px; border: none; border-radius: 8px; 
-            cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; font-family: 'Inter', sans-serif;
-        }
+        .icon-btn { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: 0.2s; font-family: 'Inter', sans-serif; }
         .btn-play { background: var(--accent); color: white; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
-        .btn-play:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.5); }
-        .btn-play:active { transform: scale(0.95); }
+        .btn-play:hover { transform: translateY(-1px); }
         .btn-save { background: transparent; color: var(--text-sub); border: 1px solid var(--glass-border); }
         .btn-save:hover { background: rgba(255,255,255,0.1); color: white; border-color: white; }
 
+        /* ==================== 4. 视频播放器 (核心修改) ==================== */
         #video-container { 
             flex: 1; background: #000; border-radius: 16px; 
             overflow: hidden; position: relative; 
             box-shadow: 0 20px 60px rgba(0,0,0,0.5); 
             border: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; justify-content: center;
         }
         video { width: 100%; height: 100%; display: block; }
         video.fade-in { animation: fadeIn 0.8s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* 左下角提示 (移到了控制栏上方) */
         #logs { 
-            position: absolute; bottom: 30px; left: 30px; 
+            position: absolute; bottom: 70px; left: 20px; 
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
-            padding: 8px 16px; border-radius: 20px; 
-            font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
-            color: rgba(255, 255, 255, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); 
-            pointer-events: none; display: flex; align-items: center; gap: 8px; transition: 0.3s;
+            padding: 6px 12px; border-radius: 12px; 
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+            color: rgba(255, 255, 255, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); 
+            pointer-events: none; opacity: 0; transition: opacity 0.5s;
         }
-        #logs::before { content: ''; display: block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
+        #logs.show { opacity: 1; }
 
-        .sidebar { 
-            width: 340px; background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(20px); 
-            display: flex; flex-direction: column; border-left: 1px solid var(--glass-border); 
+        /* --- 自定义控制栏 (Bottom Bar) --- */
+        .video-controls {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            height: 60px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            display: flex; align-items: center; padding: 0 20px; box-sizing: border-box;
+            gap: 15px; opacity: 0; transition: opacity 0.3s;
+            z-index: 10;
         }
-        .sidebar-header { 
-            padding: 20px; border-bottom: 1px solid var(--glass-border);
-            display: flex; justify-content: space-between; align-items: baseline;
-        }
-        .header-title {
-            font-size: 13px; font-weight: 700; color: var(--text-sub); 
-            text-transform: uppercase; letter-spacing: 1px;
-        }
-        /* ⬇️ 右上角状态文字调整：小一点，无引号 */
-        #loading-status {
-            font-size: 11px; font-weight: 500; color: var(--accent);
-            opacity: 0.8; letter-spacing: 0.5px;
-        }
+        /* 鼠标悬停容器时显示控制栏 */
+        #video-container:hover .video-controls { opacity: 1; }
 
+        /* 播放/暂停按钮 */
+        .ctrl-btn {
+            background: none; border: none; color: white; cursor: pointer;
+            width: 32px; height: 32px; padding: 0; opacity: 0.8; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .ctrl-btn:hover { opacity: 1; transform: scale(1.1); }
+        
+        /* 占位符，把右边的元素顶过去 */
+        .ctrl-spacer { flex: 1; }
+
+        /* 画质选择 (嵌入式) */
+        #qualitySelectContainer {
+            position: relative; display: flex; align-items: center;
+        }
+        #playerQualitySelect {
+            background: rgba(255, 255, 255, 0.1); 
+            color: white; border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px; padding: 4px 8px; font-size: 12px; font-weight: 600;
+            outline: none; cursor: pointer; appearance: none;
+            font-family: 'Inter', sans-serif; text-align: center;
+            min-width: 80px; transition: 0.2s;
+        }
+        #playerQualitySelect:hover { background: rgba(255, 255, 255, 0.2); }
+        #playerQualitySelect option { background-color: #222; color: white; }
+
+        /* ==================== 5. 侧边栏 ==================== */
+        .sidebar { width: 340px; background: rgba(20, 20, 25, 0.6); backdrop-filter: blur(20px); display: flex; flex-direction: column; border-left: 1px solid var(--glass-border); }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: baseline; }
+        .header-title { font-size: 13px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
+        #loading-status { font-size: 11px; font-weight: 500; color: var(--accent); opacity: 0.8; letter-spacing: 0.5px; }
         .room-list { flex: 1; overflow-y: auto; padding: 15px; }
-
-        .room-card { 
-            background: rgba(255,255,255,0.03); padding: 14px; margin-bottom: 10px; border-radius: 12px; 
-            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            display: flex; align-items: center; gap: 12px; border: 1px solid transparent; 
-            animation: slideIn 0.3s ease-out backwards;
-        }
-        .room-card:hover { 
-            background: rgba(255,255,255,0.08); transform: translateY(-2px); 
-            border-color: rgba(255,255,255,0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
+        .room-card { background: rgba(255,255,255,0.03); padding: 14px; margin-bottom: 10px; border-radius: 12px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 12px; border: 1px solid transparent; animation: slideIn 0.3s ease-out backwards; }
+        .room-card:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); border-color: rgba(255,255,255,0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: 0.3s; }
         .status-online { background: #10b981; box-shadow: 0 0 10px #10b981; transform: scale(1.2); }
         .room-info { flex: 1; overflow: hidden; }
@@ -247,7 +167,7 @@
             .app-input { width: 100%; }
             #roomName { width: 100%; }
             .player-section { padding: 15px; }
-            #logs { display: none; }
+            #video-container:hover .video-controls { opacity: 1; } /* 移动端点击显示 */
         }
     </style>
 </head>
@@ -302,11 +222,6 @@
                     <input type="text" id="roomName" class="app-input" placeholder="备注名">
                 </div>
                 
-                <div id="qualityControl">
-                    <span class="quality-label">画质</span>
-                    <select id="qualitySelect" onchange="changeQuality()"></select>
-                </div>
-                
                 <button class="icon-btn btn-play" onclick="startPlay()">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     播放
@@ -318,8 +233,25 @@
             </div>
 
             <div id="video-container">
-                <video id="videoElement" controls muted></video>
+                <video id="videoElement" muted></video>
+                
                 <div id="logs">系统就绪</div>
+
+                <div class="video-controls">
+                    <button class="ctrl-btn" id="ctrlPlay" onclick="togglePlay()">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </button>
+                    
+                    <div class="ctrl-spacer"></div>
+
+                    <div id="qualitySelectContainer" style="display:none;">
+                        <select id="playerQualitySelect" onchange="changeQuality()"></select>
+                    </div>
+
+                    <button class="ctrl-btn" onclick="toggleFullScreen()">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -348,11 +280,12 @@
     var currentQualities = {}; 
     var deleteTargetId = null; 
 
+    // 自动切后台逻辑
     document.addEventListener("visibilitychange", function() {
         const video = document.getElementById('videoElement');
         if (document.hidden) {
             if (!video.paused) {
-                video.pause(); 
+                togglePlay(); 
                 log("已切到后台 (省流模式)");
             }
         }
@@ -368,24 +301,13 @@
         const password = document.getElementById('password').value;
         const msg = document.getElementById('login-msg');
         if(!email || !password) { msg.innerText = "请输入账号密码"; msg.style.color = "#ef4444"; return; }
-        
-        msg.innerText = "验证中...";
-        msg.style.color = "var(--text-sub)";
-
+        msg.innerText = "验证中..."; msg.style.color = "var(--text-sub)";
         const { data, error } = await db.auth.signInWithPassword({ email, password });
-        if (error) { 
-            msg.innerText = "❌ 账号或密码错误"; 
-            msg.style.color = "#ef4444"; 
-        } else { 
-            msg.innerText = "✅ 登录成功"; 
-            msg.style.color = "#10b981"; 
-            showApp(data.user.email); 
-        }
+        if (error) { msg.innerText = "❌ 账号或密码错误"; msg.style.color = "#ef4444"; } 
+        else { msg.innerText = "✅ 登录成功"; msg.style.color = "#10b981"; showApp(data.user.email); }
     }
 
-    async function handleLogout() {
-        await db.auth.signOut(); location.reload();
-    }
+    async function handleLogout() { await db.auth.signOut(); location.reload(); }
 
     function showApp(email) {
         document.getElementById('login-layer').style.display = 'none';
@@ -394,27 +316,44 @@
         fetchFavorites();
     }
 
-    function log(msg) { document.getElementById('logs').innerText = msg; }
+    function log(msg) { 
+        const el = document.getElementById('logs');
+        el.innerText = msg;
+        el.classList.add('show');
+        // 3秒后自动隐藏 log
+        clearTimeout(window.logTimeout);
+        window.logTimeout = setTimeout(() => el.classList.remove('show'), 3000);
+    }
 
-    // --- ⬇️ 核心优化：硬核参数格式化 ---
     function formatQuality(key) {
-        // 统一转小写处理
         key = key.toLowerCase();
-        
-        // 1. 特殊关键字转专业术语
         if (['best', 'source', 'chunked', 'origin'].includes(key)) return 'Source';
         if (['worst', 'mobile', 'low'].includes(key)) return 'Mobile';
         if (key === 'audio_only') return 'Audio Only';
-
-        // 2. 纯参数提取：例如 "1080p60" -> "1080P 60"
-        if (key.includes('p')) {
-            // 把 p 变成大写 P，并在后面加空格 (如果后面有数字)
-            // 例子: 720p60 -> 720P 60, 1080p -> 1080P
-            return key.replace('p', 'P ').toUpperCase().trim();
-        }
-
-        // 3. 兜底：直接显示大写 (如 4K, 8K)
+        if (key.includes('p')) return key.replace('p', 'P ').toUpperCase().trim();
         return key.toUpperCase();
+    }
+
+    // --- 播放器控制逻辑 ---
+    function togglePlay() {
+        const video = document.getElementById('videoElement');
+        const icon = document.getElementById('ctrlPlay');
+        if (video.paused) {
+            video.play();
+            icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'; // 暂停图标
+        } else {
+            video.pause();
+            icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'; // 播放图标
+        }
+    }
+
+    function toggleFullScreen() {
+        const container = document.getElementById('video-container');
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {});
+        } else {
+            document.exitFullscreen();
+        }
     }
 
     async function startPlay(urlFromList) {
@@ -422,7 +361,8 @@
         if (!inputUrl) return alert('请输入地址');
         if(urlFromList) document.getElementById('roomUrl').value = inputUrl;
 
-        document.getElementById('qualityControl').style.display = 'none';
+        // 重置画质框
+        document.getElementById('qualitySelectContainer').style.display = 'none';
         log("正在解析直播流...");
 
         try {
@@ -432,19 +372,18 @@
             if (data.status === 'error') { log(data.message); return; }
             
             currentQualities = data.qualities;
-            const select = document.getElementById('qualitySelect');
+            const select = document.getElementById('playerQualitySelect'); // 注意 ID 变了
             select.innerHTML = ''; 
             for (let q in currentQualities) {
                 let option = document.createElement('option');
                 option.value = q; 
-                // ⬇️ 使用新的硬核格式化函数
                 option.innerText = formatQuality(q);
                 select.appendChild(option);
             }
             select.value = data.default_quality;
             
             if (Object.keys(currentQualities).length > 1) {
-                document.getElementById('qualityControl').style.display = 'flex';
+                document.getElementById('qualitySelectContainer').style.display = 'flex';
             }
 
             log("已连接: " + formatQuality(data.default_quality));
@@ -453,12 +392,13 @@
     }
 
     function changeQuality() {
-        const name = document.getElementById('qualitySelect').value;
+        const name = document.getElementById('playerQualitySelect').value;
         loadVideo(currentQualities[name]);
     }
 
     function loadVideo(realUrl) {
         const videoElement = document.getElementById('videoElement');
+        const playBtn = document.getElementById('ctrlPlay');
         
         if (flvPlayer) { flvPlayer.destroy(); flvPlayer = null; }
         if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
@@ -467,16 +407,19 @@
         void videoElement.offsetWidth;
         videoElement.classList.add('fade-in');
 
+        // 更新按钮状态
         videoElement.onpause = function() {
-            log("已暂停 (停止下载)");
+            log("已暂停");
             if(hlsPlayer) hlsPlayer.stopLoad();
             if(flvPlayer) flvPlayer.unload();
+            playBtn.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
         };
 
         videoElement.onplay = function() {
             log("正在同步画面...");
             if(flvPlayer) { flvPlayer.load(); flvPlayer.play(); }
             if(hlsPlayer) { hlsPlayer.startLoad(); if(hlsPlayer.liveSyncPosition) videoElement.currentTime = hlsPlayer.liveSyncPosition; }
+            playBtn.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
         };
 
         if (realUrl.includes('.flv')) {
