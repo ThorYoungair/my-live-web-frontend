@@ -5,7 +5,7 @@
     <title>My Multilive</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙂</text></svg>">
     <meta name="referrer" content="no-referrer">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -14,7 +14,8 @@
     <style>
         /* ==================== 1. 全局配置 ==================== */
         :root {
-            --glass-bg: rgba(20, 20, 25, 0.85);
+            /* ⬇️ 透明度调整：0.85 -> 0.5，更通透 */
+            --glass-bg: rgba(20, 20, 25, 0.5);
             --glass-border: rgba(255, 255, 255, 0.08);
             --accent: #6366f1; 
             --accent-glow: rgba(99, 102, 241, 0.4);
@@ -22,12 +23,21 @@
             --text-sub: #94a3b8;
         }
 
+        /* ⬇️ 基础重置，防止布局溢出 */
+        * { box-sizing: border-box; }
+
         body { 
             margin: 0; padding: 0; 
             font-family: 'Inter', sans-serif; 
             background-color: #020617; 
             color: var(--text-main); 
-            height: 100vh; overflow: hidden; user-select: none;
+            /* ⬇️ 适配移动端动态地址栏，防止底部被遮挡 */
+            height: 100vh; 
+            height: 100dvh; 
+            overflow: hidden; 
+            user-select: none;
+            /* ⬇️ 确保 iOS 点击高亮消失 */
+            -webkit-tap-highlight-color: transparent;
         }
 
         :root { color-scheme: dark; }
@@ -47,7 +57,7 @@
         .modal-box { background: rgba(30, 30, 40, 0.9); border: 1px solid var(--glass-border); padding: 30px; border-radius: 24px; width: 320px; box-shadow: 0 40px 80px -12px rgba(0, 0, 0, 0.7); animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; align-items: center; text-align: center; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .login-input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: white; border-radius: 12px; outline: none; transition: 0.3s; font-size: 14px; box-sizing: border-box; margin-bottom: 10px; }
+        .login-input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); color: white; border-radius: 12px; outline: none; transition: 0.3s; font-size: 14px; margin-bottom: 10px; }
         .login-input:focus { border-color: var(--accent); background: rgba(0,0,0,0.6); }
         .btn-login { width: 100%; padding: 14px; margin-top: 10px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 15px; }
         .btn-login:hover { transform: scale(1.02); }
@@ -62,7 +72,16 @@
         /* ==================== 3. 主界面布局 ==================== */
         #main-app { display: none; height: 100%; flex-direction: column; }
         
-        header { height: 60px; padding: 0 25px; display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); }
+        header { 
+            /* ⬇️ 适配 iPhone 刘海屏：高度增加，padding-top 增加安全距离 */
+            height: calc(60px + env(safe-area-inset-top)); 
+            padding: calc(10px + env(safe-area-inset-top)) 25px 10px 25px;
+            display: flex; align-items: center; justify-content: space-between; 
+            background: rgba(255, 255, 255, 0.02); 
+            backdrop-filter: blur(10px); 
+            border-bottom: 1px solid var(--glass-border); 
+            flex-shrink: 0; /* 防止被压缩 */
+        }
         h1 { margin: 0; font-size: 18px; font-weight: 800; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .btn-logout { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-sub); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; }
 
@@ -73,6 +92,8 @@
             flex: 1; display: flex; flex-direction: column; 
             padding: 20px; position: relative; 
             justify-content: center; align-items: center;
+            /* ⬇️ 移动端左侧不需要 safe-area，但右侧可能需要（如果横屏） */
+            padding-left: env(safe-area-inset-left);
         }
 
         #video-container { 
@@ -90,7 +111,7 @@
         video.fade-in { animation: fadeIn 0.8s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 系统 Log (左上角) */
+        /* 系统 Log */
         #logs { 
             position: absolute; top: 20px; left: 20px; 
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
@@ -101,12 +122,11 @@
         }
         #logs.show { opacity: 1; }
 
-        /* ⬇️ 新增：屏幕中央音量指示器 (OSD) */
+        /* 音量 OSD */
         #volume-indicator {
             position: absolute; top: 50%; left: 50%; 
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.6); 
-            backdrop-filter: blur(15px);
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px);
             padding: 20px 30px; border-radius: 20px;
             color: white; font-size: 24px; font-weight: 700;
             display: flex; align-items: center; gap: 15px;
@@ -121,11 +141,12 @@
         .video-controls {
             position: absolute; bottom: 20px; left: 20px; right: 20px;
             height: 56px;
+            /* ⬇️ 透明度更低，更高级 */
             background: rgba(15, 15, 20, 0.5); 
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
-            display: flex; align-items: center; padding: 0 16px; box-sizing: border-box;
+            display: flex; align-items: center; padding: 0 16px; 
             gap: 16px; 
             opacity: 0; transform: translateY(10px);
             transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -164,10 +185,15 @@
         #playerQualitySelect:hover { background: rgba(255,255,255,0.1); }
         #playerQualitySelect option { background-color: #222; color: white; }
 
-        /* --- 右侧：功能侧边栏 --- */
+        /* --- 右侧：功能侧边栏 (高透明度) --- */
         .sidebar { 
-            width: 360px; background: var(--glass-bg); backdrop-filter: blur(30px); 
-            display: flex; flex-direction: column; border-left: 1px solid var(--glass-border); 
+            width: 360px; 
+            background: var(--glass-bg); /* 使用新的透明度 0.5 */
+            backdrop-filter: blur(30px); 
+            display: flex; flex-direction: column; 
+            border-left: 1px solid var(--glass-border);
+            /* ⬇️ 适配 iPhone 横屏时的右侧安全区域 */ 
+            padding-right: env(safe-area-inset-right);
         }
         
         .add-panel { padding: 25px; border-bottom: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 12px; }
@@ -177,7 +203,6 @@
             width: 100%; padding: 12px 14px; background: rgba(0,0,0,0.3);
             border: 1px solid var(--glass-border); border-radius: 8px;
             color: white; font-size: 13px; outline: none; transition: 0.3s;
-            box-sizing: border-box;
         }
         .sidebar-input:focus { border-color: var(--accent); background: rgba(0,0,0,0.5); }
 
@@ -215,9 +240,18 @@
         .btn-delete { border: none; background: transparent; color: #555; padding: 5px; cursor: pointer; font-size: 16px; border-radius: 4px; }
         .btn-delete:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
 
+        /* ⬇️ 移动端布局优化 */
         @media (max-width: 768px) {
             .main-layout { flex-direction: column; }
-            .sidebar { width: 100%; height: 50%; border-left: none; border-top: 1px solid var(--glass-border); }
+            .sidebar { 
+                width: 100%; height: auto; flex: 1; /* 自动填充剩余空间 */
+                border-left: none; border-top: 1px solid var(--glass-border); 
+            }
+            .player-section { 
+                padding: 15px; flex: 0 0 auto; /* 不自动拉伸，由内容决定 */
+                height: 40vh; /* 视频区占 40% 高度 */
+            }
+            #video-container:hover .video-controls { opacity: 1; }
         }
     </style>
 </head>
@@ -331,10 +365,8 @@
     var hlsPlayer = null;
     var currentQualities = {}; 
     var deleteTargetId = null; 
-    // 读取上次音量
     var lastVolume = parseFloat(localStorage.getItem('playerVolume')) || 0.5;
     
-    // --- 自动隐藏控制栏逻辑 ---
     let idleTimer = null;
     const controls = document.querySelector('.video-controls');
     const container = document.getElementById('video-container');
@@ -359,22 +391,18 @@
         }
     }
 
-    // --- ⬇️ 新增：显示屏幕中间的音量提示 ---
     function showVolumeIndicator(vol) {
         const el = document.getElementById('volume-indicator');
         const percent = Math.round(vol * 100);
         let icon = '🔊';
         if (vol === 0) icon = '🔇';
         else if (vol < 0.5) icon = '🔉';
-        
         el.innerText = `${icon} ${percent}%`;
         el.classList.add('show');
-        
         clearTimeout(window.volTimeout);
         window.volTimeout = setTimeout(() => el.classList.remove('show'), 1000);
     }
 
-    // 绑定滚轮音量
     document.getElementById('video-container').addEventListener('wheel', (e) => {
         e.preventDefault();
         const video = document.getElementById('videoElement');
@@ -385,16 +413,12 @@
         resetIdleTimer();
     });
 
-    // --- ⬇️ 新增：键盘快捷键 (W/S/ArrowUp/ArrowDown/Space/F) ---
     document.addEventListener('keydown', (e) => {
         if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
         const video = document.getElementById('videoElement');
-        
         switch(e.code) {
-            case 'Space': 
-                e.preventDefault(); togglePlay(); resetIdleTimer(); break;
-            case 'KeyF': 
-                e.preventDefault(); toggleFullScreen(); break;
+            case 'Space': e.preventDefault(); togglePlay(); resetIdleTimer(); break;
+            case 'KeyF': e.preventDefault(); toggleFullScreen(); break;
             case 'ArrowUp': 
             case 'KeyW':
                 e.preventDefault();
@@ -414,7 +438,6 @@
         }
     });
 
-    // 点击屏幕播放/暂停 (避开控制栏)
     document.getElementById('video-container').addEventListener('click', (e) => {
         if (e.target.closest('.video-controls')) return;
         togglePlay();
@@ -480,14 +503,13 @@
         }
     }
 
-    // ⬇️ 修改：设置音量时同时触发 OSD 显示和保存
     function setVolume(val) {
         const video = document.getElementById('videoElement');
         video.volume = val;
         video.muted = (val === 0);
         updateMuteIcon(val);
-        showVolumeIndicator(val); // 显示中间提示
-        localStorage.setItem('playerVolume', val); // 保存记忆
+        showVolumeIndicator(val);
+        localStorage.setItem('playerVolume', val);
     }
 
     function toggleMute() {
@@ -571,7 +593,6 @@
         void videoElement.offsetWidth;
         videoElement.classList.add('fade-in');
 
-        // ⬇️ 恢复记忆音量
         videoElement.volume = lastVolume;
         videoElement.muted = (lastVolume === 0);
         slider.value = lastVolume;
@@ -599,14 +620,10 @@
                 flvPlayer = mpegts.createPlayer({ type: 'flv', isLive: true, url: realUrl });
                 flvPlayer.attachMediaElement(videoElement);
                 flvPlayer.load();
-                // 尝试恢复播放，如果失败(浏览器限制)则静音
-                var promise = flvPlayer.play();
-                if (promise !== undefined) {
-                    promise.catch(error => {
-                        videoElement.muted = true;
-                        flvPlayer.play();
-                    });
-                }
+                videoElement.muted = true;
+                document.querySelector('.volume-slider').value = 0;
+                updateMuteIcon(0);
+                flvPlayer.play().catch(e=>{});
             }
         } else if (realUrl.includes('.m3u8')) {
             if (Hls.isSupported()) {
@@ -614,13 +631,10 @@
                 hlsPlayer.loadSource(realUrl);
                 hlsPlayer.attachMedia(videoElement);
                 hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() { 
-                    var promise = videoElement.play();
-                    if (promise !== undefined) {
-                        promise.catch(error => {
-                            videoElement.muted = true;
-                            videoElement.play();
-                        });
-                    }
+                    videoElement.muted = true;
+                    document.querySelector('.volume-slider').value = 0;
+                    updateMuteIcon(0);
+                    videoElement.play(); 
                 });
             } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
                 videoElement.src = realUrl; videoElement.play();
@@ -676,10 +690,8 @@
     async function saveRoom() {
         const url = document.getElementById('roomUrl').value;
         const name = document.getElementById('roomName').value;
-        
         if (!url) return alert("请填写直播间链接");
         if (!name) return alert("请填写主播备注");
-
         await db.from('favorites').insert({ name, url });
         document.getElementById('roomName').value = '';
         fetchFavorites();
