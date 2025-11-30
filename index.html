@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>My Multilive</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🙂</text></svg>">
+    
+    <link rel="icon" type="image/png" href="icon.png">
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Multilive">
     <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -81,7 +89,7 @@
 
         .main-layout { display: flex; flex: 1; overflow: hidden; height: 100%; }
 
-        /* 左侧视频 */
+        /* 左侧：视频区 */
         .player-section { 
             flex: 1; display: flex; flex-direction: column; 
             padding: 20px; position: relative; 
@@ -108,7 +116,6 @@
         video.fade-in { animation: fadeIn 0.8s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 全屏修正 */
         #video-container:fullscreen {
             display: flex; justify-content: center; align-items: center;
             background: black;
@@ -189,7 +196,7 @@
         #playerQualitySelect:hover { background: rgba(255,255,255,0.1); }
         #playerQualitySelect option { background-color: #222; color: white; }
 
-        /* 右侧侧边栏 */
+        /* --- 右侧：功能侧边栏 --- */
         .sidebar { 
             width: 360px; 
             background: var(--glass-bg); 
@@ -368,7 +375,7 @@
     var currentQualities = {}; 
     var deleteTargetId = null; 
     var lastVolume = parseFloat(localStorage.getItem('playerVolume')) || 0.5;
-    var currentGlobalUrl = ""; // ⬇️ 新增：记录当前直播间的 URL
+    var currentGlobalUrl = ""; 
     
     let idleTimer = null;
     const controls = document.querySelector('.video-controls');
@@ -458,7 +465,6 @@
         const video = document.getElementById('videoElement');
         if (document.hidden) {
             if (!video.paused) { 
-                // 切后台只暂停，不重载，省流量
                 video.pause(); 
                 log("已切到后台 (省流)"); 
             }
@@ -506,22 +512,18 @@
         return key.toUpperCase();
     }
 
-    // --- ⬇️ 核心修复：Play = 重载流 ---
     function togglePlay() {
         const video = document.getElementById('videoElement');
         const icon = document.getElementById('ctrlPlay');
         
         if (video.paused) {
-            // 如果是暂停状态，且有当前链接，则重新加载以同步直播流
             if (currentGlobalUrl) {
-                // UI 变更为播放状态 (加载中)
                 icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-                startPlay(currentGlobalUrl); // 👈 关键修改：重新解析播放
+                startPlay(currentGlobalUrl); 
             } else {
                 video.play();
             }
         } else {
-            // 如果是播放状态，直接暂停 (省流)
             video.pause();
             icon.innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
         }
@@ -553,7 +555,6 @@
         updateMuteIcon(video.volume);
     }
 
-    // ⬇️ 优化：四态音量图标
     function updateMuteIcon(vol) {
         const icon = document.getElementById('ctrlMute');
         let path = '';
@@ -580,7 +581,6 @@
         if (!inputUrl) return alert('请输入地址');
         if(urlFromList) document.getElementById('roomUrl').value = inputUrl;
 
-        // ⬇️ 记录当前播放的 URL
         currentGlobalUrl = inputUrl;
 
         document.getElementById('qualitySelectContainer').style.display = 'none';
@@ -633,7 +633,6 @@
         slider.value = lastVolume;
         updateMuteIcon(lastVolume);
 
-        // ⬇️ 状态更新逻辑保持不变，但触发源已变
         videoElement.onpause = function() {
             log("已暂停");
             if(hlsPlayer) hlsPlayer.stopLoad();
