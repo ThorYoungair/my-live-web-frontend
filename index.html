@@ -261,13 +261,13 @@
 
 <script>
     // ==========================================
-    // ⚠️ 本地测试地址
-    const BACKEND_URL = 'http://localhost:8000'; 
-    
-    const SUPABASE_URL = 'https://cqhvdujppknngygogawj.supabase.co'; 
-    const SUPABASE_KEY = 'sb_publishable__Yv1H0eUEP5E6xwGFXGptQ_ezuZi4yF';
+    // ⚠️ 后端部署地址 (请替换为您的 Render URL!)
+    const BACKEND_URL = 'https://live-api-m63c.onrender.com'; 
     // ==========================================
 
+    const SUPABASE_URL = 'https://cqhvdujppknngygogawj.supabase.co'; 
+    const SUPABASE_KEY = 'sb_publishable__Yv1H0eUEP5E6xwGFXGptQ_ezuZi4yF';
+    
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_KEY);
     
@@ -282,8 +282,14 @@
     // ⬇️ 弹幕开关状态 (默认开启)
     var isDanmakuOn = localStorage.getItem('danmakuOn') !== 'false';
 
-    // ⬇️ 初始化：完全清空，只用 JS 创建实例
+    // ⬇️ 初始化：创建 EasyDanmaku 实例
     function initDanmaku() {
+        if (typeof EasyDanmaku === 'undefined') {
+            console.error("EasyDanmaku 库未加载！无法初始化弹幕。");
+            log("❌ 弹幕库加载失败！");
+            return; 
+        }
+
         const container = document.getElementById('danmaku-container');
         container.innerHTML = ''; 
         danmakuInst = new EasyDanmaku({
@@ -292,13 +298,12 @@
             line: 10, 
             speed: 7, 
             hover: false
-            // ❌ wrapperStyle 已移除，由 CSS 控制
         });
     }
 
     // ⬇️ 弹幕连接逻辑
     function connectDanmaku(url) {
-        if (!isDanmakuOn) return; // 如果开关关闭，不连接
+        if (!isDanmakuOn) return; 
 
         let platform = '';
         if (url.includes('bilibili')) {
@@ -314,6 +319,7 @@
         if(ws) { ws.close(); ws = null; }
         initDanmaku();
 
+        // 构造 WebSocket URL (ws:// for local, wss:// for https deployment)
         const wsProtocol = BACKEND_URL.startsWith('https') ? 'wss://' : 'ws://';
         const wsHost = BACKEND_URL.replace('http://', '').replace('https://', '');
         const wsUrl = `${wsProtocol}${wsHost}/ws/danmaku?url=${encodeURIComponent(url)}`;
@@ -344,7 +350,7 @@
         if (isDanmakuOn) {
             log("弹幕已开启");
             const video = document.getElementById('videoElement');
-            // 如果视频正在播放且是B站或抖音，立即连接
+            // 只有视频在播放且是支持的平台才连接
             if (!video.paused && (currentGlobalUrl.includes('bilibili') || currentGlobalUrl.includes('douyin'))) {
                 connectDanmaku(currentGlobalUrl);
             }
@@ -352,6 +358,7 @@
             log("弹幕已关闭");
             if(ws) { ws.close(); ws = null; }
             if(danmakuInst) { 
+                // 清理容器以避免残留
                 document.getElementById('danmaku-container').innerHTML = ''; 
                 danmakuInst = null;
             }
@@ -362,12 +369,10 @@
     function updateDanmakuBtn() {
         const btn = document.getElementById('ctrlDanmaku');
         if (isDanmakuOn) {
-            btn.classList.add('active'); // 高亮
-            // 开启图标
+            btn.classList.add('active');
             btn.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>';
         } else {
-            btn.classList.remove('active'); // 变灰
-            // 关闭图标 (带斜杠)
+            btn.classList.remove('active');
             btn.innerHTML = '<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm0 14H5.17l-.59.59-.58.58V4h16v12zm-8-2h2v-2h-2v2zm0-4h2V6h-2v4z"/></svg>';
         }
     }
@@ -410,9 +415,7 @@
 
     document.getElementById('ctrlPlay').addEventListener('click', (e) => { e.stopPropagation(); togglePlay(); });
     document.getElementById('ctrlMute').addEventListener('click', (e) => { e.stopPropagation(); toggleMute(); });
-    // 绑定弹幕按钮
     document.getElementById('ctrlDanmaku').addEventListener('click', (e) => { e.stopPropagation(); toggleDanmaku(); });
-    
     document.getElementById('ctrlFullScreen').addEventListener('click', (e) => { e.stopPropagation(); toggleFullScreen(); });
     document.querySelector('.volume-slider').addEventListener('click', (e) => e.stopPropagation());
     document.getElementById('playerQualitySelect').addEventListener('click', (e) => e.stopPropagation());
@@ -468,9 +471,12 @@
     });
 
     window.onload = async function() {
+        // 确保初始化 EasyDanmaku
+        initDanmaku(); 
+
         const { data: { session } } = await db.auth.getSession();
         if (session) showApp(session.user.email);
-        updateDanmakuBtn(); // 初始化按钮状态
+        updateDanmakuBtn(); 
     };
 
     async function handleLogin() {
@@ -575,7 +581,7 @@
         document.getElementById('qualitySelectContainer').style.display = 'none';
         log("正在解析直播流...");
 
-        // ⬇️ 弹幕连接逻辑：只在开关开启时连接弹幕
+        // ⬇️ 弹幕连接逻辑
         if((inputUrl.includes('bilibili') || inputUrl.includes('douyin')) && isDanmakuOn) connectDanmaku(inputUrl);
         else { if(ws) ws.close(); }
 
